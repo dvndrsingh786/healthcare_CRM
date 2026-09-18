@@ -1,0 +1,14 @@
+line-length = 120
+target-version = "py311"
+
+[lint]
+# E/F: pyflakes and pycodestyle errors, I: import order, B: common bugs, S: security checks.
+select = ["E", "F", "I", "B", "S", "UP"]
+ignore = [
+    "B008",  # FastAPI uses Depends(...) in default arguments on purpose.
+    "S608",  # We build SQL from allow-listed column names only; values are always parameters.
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]  # assert and demo passwords are fine in tests
+"seed.py" = ["S105", "S106"]
