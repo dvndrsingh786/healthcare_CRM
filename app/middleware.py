@@ -11,7 +11,7 @@ import secrets
 import time
 
 from app import metrics
-from app.context import request_id_var
+from app.context import client_ip_var, request_id_var, user_agent_var
 from app.errors import error_response
 
 logger = logging.getLogger("hcrm.access")
@@ -44,6 +44,10 @@ class RequestContextMiddleware:
         incoming = dict(scope["headers"]).get(b"x-request-id", b"").decode("latin-1")
         request_id = incoming if SAFE_REQUEST_ID.match(incoming) else secrets.token_hex(8)
         token = request_id_var.set(request_id)
+        client = scope.get("client")
+        ip_token = client_ip_var.set(client[0] if client else None)
+        agent = dict(scope["headers"]).get(b"user-agent", b"").decode("latin-1")[:255]
+        agent_token = user_agent_var.set(agent or None)
         scope.setdefault("state", {})["request_id"] = request_id
 
         path = scope["path"]
@@ -81,3 +85,5 @@ class RequestContextMiddleware:
                 "duration_ms": duration_ms,
             })
             request_id_var.reset(token)
+            client_ip_var.reset(ip_token)
+            user_agent_var.reset(agent_token)

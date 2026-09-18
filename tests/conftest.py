@@ -42,10 +42,15 @@ def clean_tables(test_engine):
         tables = db.execute(text(
             "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
         )).scalars().all()
-        to_empty = [f'"{table}"' for table in tables if table not in TABLES_TO_KEEP]
-        if to_empty:
-            # TRUNCATE is not blocked by the append-only row triggers, so tests can reset audit data.
-            db.execute(text(f"TRUNCATE {', '.join(to_empty)} CASCADE"))
+        # "replica" mode pauses triggers for this transaction only: foreign-key checks and the
+        # append-only guards on audit/consent tables. That lets us wipe everything quickly while
+        # keeping the built-in roles and permissions that migrations inserted.
+        # (Needs a superuser, like the default "postgres" user; the API itself never does this.)
+        db.execute(text("SET LOCAL session_replication_role = replica"))
+        for table in tables:
+            if table not in TABLES_TO_KEEP:
+                db.execute(text(f'DELETE FROM "{table}"'))
+        db.execute(text("DELETE FROM roles WHERE organisation_id IS NOT NULL"))
 
 
 @pytest.fixture
@@ -55,3 +60,26 @@ def client(test_engine):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+# Two separate organisations. Many tests use "org_b" to try to reach "org_a" data.
+@pytest.fixture
+def org_a(client, test_engine):
+    from helpers import make_organisation
+    return make_organisation(client, test_engine, "northfield")
+
+
+@pytest.fixture
+def org_b(client, test_engine):
+    from helpers import make_organisation
+    return make_organisation(client, test_engine, "southbank")
+
+
+@pytest.fixture
+def sent_messages():
+    """Everything the (fake) email/SMS/push provider 'sent' during the test."""
+    from app.messaging import ConsoleProvider, set_provider
+    provider = ConsoleProvider()
+    set_provider(provider)
+    yield provider.sent
+    set_provider(ConsoleProvider())

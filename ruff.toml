@@ -12,3 +12,6 @@ ignore = [
 [lint.per-file-ignores]
 "tests/*" = ["S101", "S105", "S106"]  # assert and demo passwords are fine in tests
 "seed.py" = ["S105", "S106"]
+
+[lint.isort]
+known-first-party = ["app", "helpers", "migrate"]

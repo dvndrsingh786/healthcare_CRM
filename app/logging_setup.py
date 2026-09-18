@@ -71,3 +71,4 @@ def setup_logging(level="INFO"):
     root.setLevel(level)
     # Uvicorn's own access log prints full URLs; ours (in middleware.py) is redacted instead.
     logging.getLogger("uvicorn.access").disabled = True
+    logging.getLogger("httpx").setLevel(logging.WARNING)
