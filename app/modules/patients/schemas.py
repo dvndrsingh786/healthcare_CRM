@@ -268,7 +268,7 @@ class AssignmentCreate(StrictModel):
 
     model_config = {"json_schema_extra": {"examples": [
         {"staff_user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33", "assignment_type": "PRIMARY",
-         "starts_on": "2026-10-01"},
+         "starts_on": "2027-03-15"},
     ]}}
 
 

@@ -18,7 +18,7 @@ class AppointmentCreate(StrictModel):
     patient_id: UUID
     staff_user_id: UUID | None = None
     team_id: UUID | None = None
-    starts_at: AwareDateTime = Field(description="With a UTC offset or Z, e.g. 2026-10-01T09:30:00+01:00")
+    starts_at: AwareDateTime = Field(description="With a UTC offset or Z, e.g. 2027-03-15T09:30:00+00:00")
     ends_at: AwareDateTime
     timezone: TimeZoneName | None = Field(None, description="IANA name, e.g. Europe/London. "
                                                             "Default: the organisation's time zone")
@@ -31,7 +31,7 @@ class AppointmentCreate(StrictModel):
 
     model_config = {"json_schema_extra": {"examples": [{
         "patient_id": "0b6c1f0e-3a55-4c1e-9d0a-2f7f5d1c9a10", "staff_user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33",
-        "starts_at": "2026-10-01T09:30:00+01:00", "ends_at": "2026-10-01T10:15:00+01:00",
+        "starts_at": "2027-03-15T09:30:00+00:00", "ends_at": "2027-03-15T10:15:00+00:00",
         "timezone": "Europe/London", "appointment_type": "HOME_VISIT", "mode": "IN_PERSON",
         "location": "Patient's home", "patient_instructions": "Please have your medication list ready.",
     }]}}
@@ -62,7 +62,7 @@ class RescheduleRequest(StrictModel):
     reason: ShortText | None = None
 
     model_config = {"json_schema_extra": {"examples": [
-        {"version": 2, "starts_at": "2026-10-03T14:00:00+01:00", "ends_at": "2026-10-03T14:45:00+01:00",
+        {"version": 2, "starts_at": "2027-03-17T14:00:00+00:00", "ends_at": "2027-03-17T14:45:00+00:00",
          "reason": "Nurse unavailable"},
     ]}}
 

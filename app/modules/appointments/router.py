@@ -43,7 +43,7 @@ def list_appointments(
     team_id: UUID | None = None,
     status: AppointmentStatus | None = None,
     starts_from: AwareDateTime | None = Query(None, alias="from", description="Start time >= this (ISO 8601, "
-                                                                             "e.g. 2026-10-01T00:00:00Z)"),
+                                                                             "e.g. 2027-03-15T00:00:00Z)"),
     starts_before: AwareDateTime | None = Query(None, alias="to", description="Start time < this"),
     sort: str | None = Query(None, description="starts_at, created_at, updated_at (prefix - for descending)"),
     paging=Depends(page_params),

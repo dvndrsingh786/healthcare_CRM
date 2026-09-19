@@ -120,5 +120,5 @@ seed.py, manage.py     demo data and operator commands
 | Tests fail with `permission denied to create database` | The test user needs `CREATEDB` (the default `postgres` user has it). |
 | `429 RATE_LIMITED` on login while testing | Five attempts per minute per email and IP (`LOGIN_RATE_LIMIT_PER_MINUTE`). Wait a minute. |
 | `Demo data already exists` | `seed.py` runs once. Drop and recreate the database, then migrate and seed again. |
-| Times rejected with "Include a UTC offset" | Send ISO 8601 with an offset or `Z`, e.g. `2026-10-01T09:30:00+01:00`. In a query string, encode `+` as `%2B` or use `Z`. |
+| Times rejected with "Include a UTC offset" | Send ISO 8601 with an offset or `Z`, e.g. `2027-03-15T09:30:00+00:00`. In a query string, encode `+` as `%2B` or use `Z`. |
 | Uploads return 415 | `PUT` the file with `Content-Type` equal to the `mime_type` declared in the upload intent. |

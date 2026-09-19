@@ -56,7 +56,7 @@ notification worker (see [Notifications](#scenario-5-messages-to-the-patient)), 
 
 - Tokens last **15 minutes**. On **401 UNAUTHENTICATED**, log in again.
 - Five wrong passwords in a minute gives **429 RATE_LIMITED**. Wait a minute.
-- Times must be **in the future** and include a time zone, e.g. `2026-10-01T10:00:00+01:00` or `...Z`.
+- Times must be **in the future** and include a time zone, e.g. `2027-03-15T10:00:00+00:00` or `...Z`.
   The dates in the examples below may need moving forward.
 - Most ids (patients, users, appointments) come from an earlier response: copy the `id` value.
 - Every error has the same shape: `{"error": {"code": ..., "message": ..., "request_id": ...}}`.
@@ -75,7 +75,7 @@ The System Admin has no access to patients or appointments. The Ops Admin sees e
 
 ```json
 {"patient_id": "MAGGIE_ID", "staff_user_id": "NURSE_ID",
- "starts_at": "2026-10-05T10:00:00+01:00", "ends_at": "2026-10-05T10:45:00+01:00",
+ "starts_at": "2027-03-22T10:00:00+00:00", "ends_at": "2027-03-22T10:45:00+00:00",
  "timezone": "Europe/London", "appointment_type": "HOME_VISIT",
  "location": "Patient's home", "patient_instructions": "Have your medication list ready",
  "internal_note": "Key safe code with the office"}
@@ -84,7 +84,7 @@ The System Admin has no access to patients or appointments. The Ops Admin sees e
 Expected: **201**, `"status": "SCHEDULED"`, `"version": 1`. Copy the appointment `id` (APPOINTMENT_ID).
 
 - Book the **same nurse at an overlapping time** → **409 `APPOINTMENT_CONFLICT`** (no double booking).
-- Book with a time in the past, or without `+01:00` → **422**.
+- Book with a time in the past, or without a time zone (`+00:00` or `Z`) → **422**.
 
 **3. The patient sees it in the app.** Log in as **`maggie@`**.
 
@@ -94,8 +94,8 @@ Expected: **201**, `"status": "SCHEDULED"`, `"version": 1`. Copy the appointment
 **4. Reschedule.** Log in as **`ops@`**. `POST /api/v1/appointments/APPOINTMENT_ID/reschedule`:
 
 ```json
-{"version": 1, "starts_at": "2026-10-06T14:00:00+01:00",
- "ends_at": "2026-10-06T14:45:00+01:00", "reason": "Nurse on training"}
+{"version": 1, "starts_at": "2027-03-23T14:00:00+00:00",
+ "ends_at": "2027-03-23T14:45:00+00:00", "reason": "Nurse on training"}
 ```
 
 Expected: **200**, `"version": 2`. Send the same request again (still `"version": 1`) →

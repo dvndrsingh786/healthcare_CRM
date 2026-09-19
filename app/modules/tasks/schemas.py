@@ -23,7 +23,7 @@ class TaskCreate(StrictModel):
 
     model_config = {"json_schema_extra": {"examples": [{
         "title": "Call to check on new medication", "patient_id": "0b6c1f0e-3a55-4c1e-9d0a-2f7f5d1c9a10",
-        "priority": "HIGH", "due_at": "2026-10-02T12:00:00Z",
+        "priority": "HIGH", "due_at": "2027-03-16T12:00:00Z",
     }]}}
 
 
@@ -45,7 +45,7 @@ class TaskUpdate(StrictModel):
         return self
 
     model_config = {"json_schema_extra": {"examples": [
-        {"version": 1, "status": "IN_PROGRESS", "due_at": "2026-10-04T12:00:00Z"},
+        {"version": 1, "status": "IN_PROGRESS", "due_at": "2027-03-18T12:00:00Z"},
     ]}}
 
 

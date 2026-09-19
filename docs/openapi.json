@@ -8612,10 +8612,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Start time >= this (ISO 8601, e.g. 2026-10-01T00:00:00Z)",
+              "description": "Start time >= this (ISO 8601, e.g. 2027-03-15T00:00:00Z)",
               "title": "From"
             },
-            "description": "Start time >= this (ISO 8601, e.g. 2026-10-01T00:00:00Z)"
+            "description": "Start time >= this (ISO 8601, e.g. 2027-03-15T00:00:00Z)"
           },
           {
             "name": "to",
@@ -19713,7 +19713,7 @@
             "type": "string",
             "format": "date-time",
             "title": "Starts At",
-            "description": "With a UTC offset or Z, e.g. 2026-10-01T09:30:00+01:00"
+            "description": "With a UTC offset or Z, e.g. 2027-03-15T09:30:00+00:00"
           },
           "ends_at": {
             "type": "string",
@@ -19813,13 +19813,13 @@
         "examples": [
           {
             "appointment_type": "HOME_VISIT",
-            "ends_at": "2026-10-01T10:15:00+01:00",
+            "ends_at": "2027-03-15T10:15:00+00:00",
             "location": "Patient's home",
             "mode": "IN_PERSON",
             "patient_id": "0b6c1f0e-3a55-4c1e-9d0a-2f7f5d1c9a10",
             "patient_instructions": "Please have your medication list ready.",
             "staff_user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33",
-            "starts_at": "2026-10-01T09:30:00+01:00",
+            "starts_at": "2027-03-15T09:30:00+00:00",
             "timezone": "Europe/London"
           }
         ]
@@ -20377,7 +20377,7 @@
           {
             "assignment_type": "PRIMARY",
             "staff_user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33",
-            "starts_on": "2026-10-01"
+            "starts_on": "2027-03-15"
           }
         ]
       },
@@ -23793,9 +23793,9 @@
         "title": "RescheduleRequest",
         "examples": [
           {
-            "ends_at": "2026-10-03T14:45:00+01:00",
+            "ends_at": "2027-03-17T14:45:00+00:00",
             "reason": "Nurse unavailable",
-            "starts_at": "2026-10-03T14:00:00+01:00",
+            "starts_at": "2027-03-17T14:00:00+00:00",
             "version": 2
           }
         ]
@@ -24247,7 +24247,7 @@
         "title": "TaskCreate",
         "examples": [
           {
-            "due_at": "2026-10-02T12:00:00Z",
+            "due_at": "2027-03-16T12:00:00Z",
             "patient_id": "0b6c1f0e-3a55-4c1e-9d0a-2f7f5d1c9a10",
             "priority": "HIGH",
             "title": "Call to check on new medication"
@@ -24543,7 +24543,7 @@
         "description": "Use /complete, /reopen and /cancel for those status changes.",
         "examples": [
           {
-            "due_at": "2026-10-04T12:00:00Z",
+            "due_at": "2027-03-18T12:00:00Z",
             "status": "IN_PROGRESS",
             "version": 1
           }

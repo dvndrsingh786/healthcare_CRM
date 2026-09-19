@@ -49,7 +49,7 @@ field errors. Valid body → 201. Same name + date of birth again → 409 `POSSI
 finds them (search text never goes in the URL), `PATCH /patients/{id}` with a stale `version` → 409 `VERSION_CONFLICT`.
 
 **4. Appointment lifecycle** (as `ops@`). `POST /appointments` (times with an offset, e.g.
-`2026-10-01T09:30:00+01:00`). A second booking for the same nurse at an overlapping time → 409
+`2027-03-15T09:30:00+00:00`). A second booking for the same nurse at an overlapping time → 409
 `APPOINTMENT_CONFLICT`. `/confirm`, `/reschedule` (with `version`), `/complete` before the start
 → 409 `INVALID_TRANSITION`, `/cancel` with a reason. `GET /appointments/{id}/history` shows each
 step. `GET /notifications?reference_id={id}` shows the queued messages. As `maggie@`,

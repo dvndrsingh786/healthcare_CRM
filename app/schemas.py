@@ -37,7 +37,7 @@ Password = Annotated[str, Field(min_length=10, max_length=128), AfterValidator(c
 def require_timezone(value: datetime):
     # Appointment times must say which time zone they are in; "10:00" alone is ambiguous.
     if value.tzinfo is None:
-        raise ValueError("Include a UTC offset or Z, for example 2026-10-01T09:30:00+01:00.")
+        raise ValueError("Include a UTC offset or Z, for example 2027-03-15T09:30:00+00:00.")
     return value
 
 
