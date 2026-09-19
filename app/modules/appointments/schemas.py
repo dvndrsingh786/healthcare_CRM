@@ -49,6 +49,10 @@ class AppointmentUpdate(StrictModel):
     internal_note: InternalNote | None = None
     app_visible: bool | None = None
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"version": 2, "mode": "PHONE", "location": None, "patient_instructions": "We will call you on your mobile."},
+    ]}}
+
 
 class RescheduleRequest(StrictModel):
     version: int = Field(ge=1)
@@ -57,9 +61,16 @@ class RescheduleRequest(StrictModel):
     timezone: TimeZoneName | None = None
     reason: ShortText | None = None
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"version": 2, "starts_at": "2026-10-03T14:00:00+01:00", "ends_at": "2026-10-03T14:45:00+01:00",
+         "reason": "Nurse unavailable"},
+    ]}}
+
 
 class CancelRequest(StrictModel):
     reason: ShortText
+
+    model_config = {"json_schema_extra": {"examples": [{"reason": "Patient admitted to hospital"}]}}
 
 
 class AppointmentOut(Out):

@@ -44,6 +44,10 @@ class TaskUpdate(StrictModel):
                 raise ValueError(f"{field} cannot be empty.")
         return self
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"version": 1, "status": "IN_PROGRESS", "due_at": "2026-10-04T12:00:00Z"},
+    ]}}
+
 
 class TaskOut(Out):
     id: UUID

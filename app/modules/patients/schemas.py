@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import AfterValidator, EmailStr, Field, StringConstraints, model_validator
 
-from app.schemas import Name, Out, Page, Phone, StrictModel
+from app.schemas import Name, Out, Page, Phone, SearchBody, StrictModel
 
 # Field classification. SENSITIVE fields are only returned to roles with patients:read_sensitive
 # and are redacted from logs. The serializer in service.py uses this list as its allow-list.
@@ -55,6 +55,11 @@ class EmergencyContactIn(StrictModel):
             raise ValueError("Give at least a phone number or an email address.")
         return self
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"name": "David Okafor", "relationship": "Son", "phone": "+44 7700 900789", "priority": 1,
+         "is_next_of_kin": True},
+    ]}}
+
 
 class EmergencyContactUpdate(StrictModel):
     name: Name | None = None
@@ -67,6 +72,8 @@ class EmergencyContactUpdate(StrictModel):
     @model_validator(mode="after")
     def required_fields_not_cleared(self):
         return reject_nulls(self, ("name", "relationship", "priority", "is_next_of_kin"))
+
+    model_config = {"json_schema_extra": {"examples": [{"phone": "+44 7700 900790", "priority": 2}]}}
 
 
 class EmergencyContactOut(Out):
@@ -139,13 +146,21 @@ class PatientUpdate(StrictModel):
                                    "preferred_language", "contact_by_email", "contact_by_sms",
                                    "contact_by_push", "status"))
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"version": 3, "phone": "+44 7700 900999", "contact_by_sms": True},
+    ]}}
+
 
 class ArchiveRequest(StrictModel):
     reason: Annotated[str, StringConstraints(min_length=3, max_length=255)]
 
+    model_config = {"json_schema_extra": {"examples": [{"reason": "Moved out of the service area"}]}}
+
 
 class AppAccountCreate(StrictModel):
     email: EmailStr
+
+    model_config = {"json_schema_extra": {"examples": [{"email": "maggie.okafor@example.com"}]}}
 
 
 class PatientOut(Out):
@@ -212,6 +227,24 @@ class AppProfileUpdate(StrictModel):
     def required_fields_not_cleared(self):
         return reject_nulls(self, ("preferred_language", "contact_by_email", "contact_by_sms", "contact_by_push"))
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"preferred_name": "Maggie", "contact_by_sms": False, "contact_by_push": True},
+    ]}}
+
+
+class PatientSearch(SearchBody):
+    search: Annotated[str, StringConstraints(min_length=2, max_length=100)] | None = Field(
+        None, description="Matches name, email, phone (and MRN if you may see it)")
+    status: PatientStatus | None = Field(None, description="Default: everything except ARCHIVED")
+    assigned_staff_id: UUID | None = None
+    team_id: UUID | None = None
+    sort: Annotated[str, StringConstraints(max_length=40)] | None = Field(
+        None, description="updated_at, created_at, legal_last_name, date_of_birth (prefix - for descending)")
+
+    model_config = {"json_schema_extra": {"examples": [
+        {"search": "okafor", "status": "ACTIVE", "sort": "legal_last_name", "page": 1, "page_size": 25},
+    ]}}
+
 
 class PatientList(Page):
     data: list[PatientOut]
@@ -232,6 +265,11 @@ class AssignmentCreate(StrictModel):
         if self.staff_user_id is not None and self.assignment_type == "TEAM":
             raise ValueError("Staff assignments must be PRIMARY or SECONDARY.")
         return self
+
+    model_config = {"json_schema_extra": {"examples": [
+        {"staff_user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33", "assignment_type": "PRIMARY",
+         "starts_on": "2026-10-01"},
+    ]}}
 
 
 class AssignmentOut(Out):

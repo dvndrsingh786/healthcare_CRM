@@ -72,7 +72,7 @@ def test_logs_contain_no_tokens_or_personal_data(client, org_a, caplog):
         tokens = login(client, org_a["ops"]["email"])
         headers = {"Authorization": f"Bearer {tokens['access_token']}"}
         created = client.post("/api/v1/patients", headers=headers, json=patient_body(mrn="NF-7777"))
-        client.get("/api/v1/patients?search=Okafor&page_size=5", headers=headers)
+        client.post("/api/v1/patients/search", headers=headers, json={"search": "Okafor", "page_size": 5})
         client.post("/api/v1/patients", headers=headers, json=patient_body(date_of_birth="2999-01-01"))
         logging.getLogger("hcrm.test").info("oops", extra={"patient": {"email": "maggie@example.com",
                                                                         "date_of_birth": "1948-03-14"}})

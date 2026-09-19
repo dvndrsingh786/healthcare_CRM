@@ -107,13 +107,23 @@ def test_search_filter_sort_and_pagination(client, org_a):
         assert response.status_code == 200, response.text
         return [p["legal_first_name"] for p in response.json()["data"]]
 
-    assert sorted(names("search=smith")) == ["Bob", "Carl"]
-    assert names("search=alice@") == ["Alice"]
-    assert names("search=NF-77") == ["Bob"]
+    def found(**body):
+        response = client.post("/api/v1/patients/search", headers=ops, json=body)
+        assert response.status_code == 200, response.text
+        return [p["legal_first_name"] for p in response.json()["data"]]
+
+    assert sorted(found(search="smith")) == ["Bob", "Carl"]
+    assert found(search="alice@") == ["Alice"]
+    assert found(search="NF-77") == ["Bob"]
+    assert found(search="smith", status="ACTIVE") == ["Bob"]
+    assert found(search="smith", sort="-legal_last_name", page_size=1) == ["Carl"]
     assert names("status=inactive") == ["Carl"]
     assert names("sort=legal_last_name") == ["Alice", "Bob", "Carl"]
     # A search for "%" must not match everything.
-    assert names("search=%25%25") == []
+    assert found(search="%%") == []
+    # The search body has the same limits as the query string.
+    assert client.post("/api/v1/patients/search", headers=ops, json={"page_size": 500}).status_code == 422
+    assert client.post("/api/v1/patients/search", headers=ops, json={"search": "x"}).status_code == 422
 
     page = client.get("/api/v1/patients?page_size=2&sort=legal_last_name", headers=ops).json()
     assert page["meta"]["total"] == 3 and page["meta"]["total_pages"] == 2
@@ -130,7 +140,7 @@ def test_coordinator_does_not_see_sensitive_fields(client, org_a):
     assert seen["sensitive_fields_hidden"] is True
     assert seen["date_of_birth"] is None and seen["mrn"] is None and seen["postcode"] is None
     # Nor can they find a patient by MRN, or sort by date of birth.
-    assert client.get("/api/v1/patients?search=NF-9", headers=coord).json()["data"] == []
+    assert client.post("/api/v1/patients/search", headers=coord, json={"search": "NF-9"}).json()["data"] == []
     assert client.get("/api/v1/patients?sort=date_of_birth", headers=coord).status_code == 422
 
 
@@ -174,7 +184,7 @@ def test_other_organisation_cannot_reach_patients(client, org_a, org_b):
     assert client.post(f"{url}/archive", headers=b_ops, json={"reason": "test"}).status_code == 404
     assert client.get(f"{url}/emergency-contacts", headers=b_ops).status_code == 404
     assert client.get(f"{url}/assignments", headers=b_ops).status_code == 404
-    assert client.get("/api/v1/patients?search=Private", headers=b_ops).json()["data"] == []
+    assert client.post("/api/v1/patients/search", headers=b_ops, json={"search": "Private"}).json()["data"] == []
 
 
 def test_archive_and_restore(client, org_a, test_engine):
@@ -270,3 +280,16 @@ def test_reads_are_audited_without_personal_data(client, org_a, test_engine):
     everything = json.dumps(audit_events(test_engine), default=str)
     for value in ("Okafor", "Margaret", "1948-03-14", "NF-555", "Elm Road", "maggie@example.com"):
         assert value not in everything
+
+
+def test_search_text_never_goes_in_the_url(client, org_a):
+    """Spec 6.6: no sensitive values in query strings. Names, emails and phone numbers are
+    searched through POST bodies; a search in the URL is refused, not silently ignored."""
+    make_patient(client, org_a)
+    ops = org_a["ops"]["headers"]
+    for url in ("/api/v1/patients?search=Okafor", "/api/v1/users?search=nurse"):
+        response = client.get(url, headers=ops)
+        assert response.status_code == 422 and response.json()["error"]["fields"][0]["field"] == "search"
+        assert "/search" in response.json()["error"]["message"]
+    users = client.post("/api/v1/users/search", headers=ops, json={"search": "care", "sort": "email"}).json()
+    assert {u["email"] for u in users["data"]} == {"care@northfield.example", "care2@northfield.example"}

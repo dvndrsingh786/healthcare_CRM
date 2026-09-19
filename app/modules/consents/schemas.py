@@ -37,6 +37,10 @@ class AppConsentChange(StrictModel):
     status: Literal["GRANTED", "WITHDRAWN"]
     policy_version: PolicyVersion
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"consent_type": "MARKETING_EMAIL", "status": "WITHDRAWN", "policy_version": "comms-2026.1"},
+    ]}}
+
 
 class ConsentOut(Out):
     id: UUID

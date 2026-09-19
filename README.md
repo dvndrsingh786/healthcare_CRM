@@ -5,7 +5,7 @@ records, assignments, appointments, tasks, notes with visibility controls, conse
 private documents, a notification outbox, and a searchable audit log.
 
 - **Stack:** Python 3.11+, FastAPI, PostgreSQL 16/17, SQLAlchemy Core (hand-written parameterised SQL), pytest
-- **API:** REST/JSON under `/api/v1`, 98 endpoints, OpenAPI at `/docs` (also committed as [docs/openapi.json](docs/openapi.json))
+- **API:** REST/JSON under `/api/v1`, 100 endpoints, OpenAPI at `/docs` (also committed as [docs/openapi.json](docs/openapi.json))
 - **Docs:** [Architecture](docs/ARCHITECTURE.md) · [Demo checklist](docs/DEMO.md) · [Runbook](docs/RUNBOOK.md) · [Known limitations & backlog](docs/BACKLOG.md) · [Handover](docs/HANDOVER.md)
 
 ## Prerequisites
@@ -68,7 +68,7 @@ In Swagger (`/docs`): call `POST /api/v1/auth/login`, copy `access_token`, click
 ## Tests and checks
 
 ```bash
-pytest                 # 92 tests; creates a throwaway database hcrm_test_<random>, drops it at the end
+pytest                 # 94 tests; creates a throwaway database hcrm_test_<random>, drops it at the end
 ruff check .           # lint (includes security rules)
 mypy                   # type checks
 python scripts/demo.py # walks through every required workflow against a running, seeded API

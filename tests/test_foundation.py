@@ -82,3 +82,19 @@ def test_empty_settings_fall_back_to_safe_defaults(monkeypatch):
         assert settings.signed_url_seconds == 300
     finally:
         get_settings.cache_clear()
+
+
+def test_every_request_body_is_documented_with_a_valid_example():
+    """Spec 5 and 13: OpenAPI documents example payloads. Each example must also pass validation,
+    so the documentation cannot drift from the real rules."""
+    from app.main import app
+    from helpers import api_routes
+
+    bodies = [route for route in api_routes(app) if route.body_field is not None]
+    assert len(bodies) > 35
+    for route in bodies:
+        model = route.body_field.field_info.annotation
+        examples = (model.model_config.get("json_schema_extra") or {}).get("examples")
+        assert examples, f"{route.path} ({model.__name__}) has no example"
+        for example in examples:
+            model.model_validate(example)

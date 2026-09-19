@@ -28,6 +28,10 @@ class OrganisationUpdate(StrictModel):
     timezone: str | None = Field(None, max_length=64)
     settings: SettingsUpdate | None = None
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"timezone": "Europe/London", "settings": {"retention": {"patient_records_years": 10}}},
+    ]}}
+
 
 class OrganisationResponse(Out):
     id: UUID

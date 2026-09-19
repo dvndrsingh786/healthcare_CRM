@@ -43,9 +43,16 @@ class NoteUpdate(StrictModel):
                 raise ValueError(f"{field} cannot be empty.")
         return self
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"version": 1, "body": "Spoke to patient and her son; managing well at home.",
+         "reason": "Added who was present"},
+    ]}}
+
 
 class RetractRequest(StrictModel):
     reason: ShortText
+
+    model_config = {"json_schema_extra": {"examples": [{"reason": "Recorded against the wrong patient"}]}}
 
 
 class NoteOut(Out):

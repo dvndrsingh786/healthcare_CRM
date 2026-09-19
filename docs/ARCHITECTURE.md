@@ -110,6 +110,7 @@ The NOTIFICATION_WORKER service role has only `notifications:process`. The Syste
 - **Field classification on patients:** MRN, date of birth and address are *sensitive*. They are `null` (with `sensitive_fields_hidden: true`) without `patients:read_sensitive`, and cannot be searched or sorted on.
 - **Visibility classes for notes and documents:** `INTERNAL` (CRM staff with read permission), `CLINICAL` (also needs `notes:read_clinical`, so support roles and the app never see it) and `APP_VISIBLE` (also shown to the patient). Writing or uploading CLINICAL content needs the clinical permission too. Revisions in a class the caller cannot read are hidden, so reclassifying a note never exposes its earlier restricted text.
 - **The patient app** has its own response models: no internal notes, staff ids, MRN or audit fields.
+- **No personal data in URLs.** Searching patients or users by name, email or phone uses `POST /patients/search` and `POST /users/search` with the text in the body; `?search=` on the GET lists is refused (422), not ignored. Query strings only ever carry ids, statuses and dates.
 
 ## Audit strategy
 

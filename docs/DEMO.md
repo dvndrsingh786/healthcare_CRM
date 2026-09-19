@@ -27,7 +27,7 @@ All demo users use the password `DemoPass123!` (demo data only).
 | Private document access | Step 8 | `test_documents.py` |
 | Audit events generated and queryable | Step 9 | `test_audit.py` |
 | Notification outbox/retry | Step 10 | `test_notifications.py` |
-| Automated tests pass | `pytest` | 92 tests |
+| Automated tests pass | `pytest` | 94 tests |
 | No secrets/sensitive debug data | `git grep`, log sample | `test_audit.py::test_audit_log_has_no_secrets_or_sensitive_payloads`, `test_workflows.py::test_logs_contain_no_tokens_or_personal_data` |
 | Known limitations/backlog documented | [BACKLOG.md](BACKLOG.md) | |
 
@@ -45,8 +45,8 @@ As `admin@`, `GET /audit-events?action=access.denied` shows the attempts.
 **3. New patient intake** (as `ops@`). `POST /patients` with a future `date_of_birth` → 422 with
 field errors. Valid body → 201. Same name + date of birth again → 409 `POSSIBLE_DUPLICATE`
 (resend with `confirm_not_duplicate: true` to override). `POST /patients/{id}/consents` → 201.
-`POST /patients/{id}/assignments` with the nurse's id (from `GET /users`) → 201. `GET /patients?search=…`
-finds them, `PATCH /patients/{id}` with a stale `version` → 409 `VERSION_CONFLICT`.
+`POST /patients/{id}/assignments` with the nurse's id (from `GET /users`) → 201. `POST /patients/search` with `{"search": "…"}`
+finds them (search text never goes in the URL), `PATCH /patients/{id}` with a stale `version` → 409 `VERSION_CONFLICT`.
 
 **4. Appointment lifecycle** (as `ops@`). `POST /appointments` (times with an offset, e.g.
 `2026-10-01T09:30:00+01:00`). A second booking for the same nurse at an overlapping time → 409

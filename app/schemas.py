@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
-from app.pagination import PageMeta
+from app.pagination import MAX_PAGE_SIZE, PageMeta, PageParams
 
 
 class StrictModel(BaseModel):
@@ -46,3 +46,14 @@ AwareDateTime = Annotated[datetime, AfterValidator(require_timezone)]
 
 class Page(BaseModel):
     meta: PageMeta
+
+
+class SearchBody(StrictModel):
+    """Base for POST .../search endpoints. Search text can be personal data (a name, an email,
+    a phone number), so it travels in the request body, never in the URL, where proxies, load
+    balancers and browser history could keep it."""
+    page: int = Field(1, ge=1, le=10000, description="Page number, starting at 1")
+    page_size: int = Field(25, ge=1, le=MAX_PAGE_SIZE, description=f"Items per page (max {MAX_PAGE_SIZE})")
+
+    def paging(self):
+        return PageParams(self.page, self.page_size)

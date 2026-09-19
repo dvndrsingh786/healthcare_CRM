@@ -1982,7 +1982,7 @@
           "Users & RBAC"
         ],
         "summary": "List Users",
-        "description": "List staff and service accounts of your organisation. **Permission:** `users:read`.",
+        "description": "List staff and service accounts of your organisation. To search by name or email use\n`POST /users/search` (keeps the search text out of the URL). **Permission:** `users:read`.",
         "operationId": "list_users_api_v1_users_get",
         "security": [
           {
@@ -2049,25 +2049,6 @@
               ],
               "title": "Role"
             }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "maxLength": 100
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Matches email or display name",
-              "title": "Search"
-            },
-            "description": "Matches email or display name"
           },
           {
             "name": "sort",
@@ -2438,6 +2419,182 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/users/search": {
+      "post": {
+        "tags": [
+          "Users & RBAC"
+        ],
+        "summary": "Search Users",
+        "description": "Search staff and service accounts by email or display name, with the same filters as\n`GET /users`. The search text is sent in the body, never in the URL. **Permission:** `users:read`.",
+        "operationId": "search_users_api_v1_users_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSearch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body is not valid JSON (INVALID_JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_JSON",
+                    "message": "The request body is not valid JSON.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked credentials (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Your session is invalid or has expired.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "You do not have access to this resource.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to you (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Patient not found.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: duplicate, stale version or invalid state (CONFLICT, ...)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "CONFLICT",
+                    "message": "This conflicts with existing data.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid input, with one entry per field (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Validation failed.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (RATE_LIMITED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Too many requests. Please wait and try again.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary failure, safe to retry later (TEMPORARY_FAILURE)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "TEMPORARY_FAILURE",
+                    "message": "The service is temporarily unavailable.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ]
       }
     },
     "/api/v1/users/{user_id}": {
@@ -5304,7 +5461,7 @@
           "Patients"
         ],
         "summary": "List Patients",
-        "description": "Search and filter the patients you may see. **Permission:** `patients:read_all`, or\n`patients:read_assigned` (then only patients assigned to you or your teams).\n\nFilters narrow your visible patients; they can never widen them.",
+        "description": "List and filter the patients you may see. **Permission:** `patients:read_all`, or\n`patients:read_assigned` (then only patients assigned to you or your teams).\n\nFilters narrow your visible patients; they can never widen them. To search by name, email or\nphone use `POST /patients/search`, which keeps the search text out of the URL.",
         "operationId": "list_patients_api_v1_patients_get",
         "security": [
           {
@@ -5315,26 +5472,6 @@
           }
         ],
         "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 2,
-                  "maxLength": 100
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Matches name, email, phone (and MRN if you may see it)",
-              "title": "Search"
-            },
-            "description": "Matches name, email, phone (and MRN if you may see it)"
-          },
           {
             "name": "status",
             "in": "query",
@@ -5583,6 +5720,182 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/patients/search": {
+      "post": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Search Patients",
+        "description": "Search the patients you may see by name, email, phone (and MRN with `patients:read_sensitive`),\nwith the same filters as `GET /patients`. The search text is sent in the body so it never\nappears in URLs or proxy logs. Nothing is created. **Permission:** `patients:read_all` or\n`patients:read_assigned`.",
+        "operationId": "search_patients_api_v1_patients_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientSearch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body is not valid JSON (INVALID_JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_JSON",
+                    "message": "The request body is not valid JSON.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or revoked credentials (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Your session is invalid or has expired.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (FORBIDDEN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "You do not have access to this resource.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to you (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Patient not found.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: duplicate, stale version or invalid state (CONFLICT, ...)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "CONFLICT",
+                    "message": "This conflicts with existing data.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid input, with one entry per field (VALIDATION_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Validation failed.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (RATE_LIMITED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Too many requests. Please wait and try again.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary failure, safe to retry later (TEMPORARY_FAILURE)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "TEMPORARY_FAILURE",
+                    "message": "The service is temporarily unavailable.",
+                    "request_id": "5f0c2a9e1b7d4c3a"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ]
       }
     },
     "/api/v1/patients/{patient_id}": {
@@ -18708,7 +19021,12 @@
         "required": [
           "email"
         ],
-        "title": "AppAccountCreate"
+        "title": "AppAccountCreate",
+        "examples": [
+          {
+            "email": "maggie.okafor@example.com"
+          }
+        ]
       },
       "AppAppointmentList": {
         "properties": {
@@ -18884,7 +19202,14 @@
           "status",
           "policy_version"
         ],
-        "title": "AppConsentChange"
+        "title": "AppConsentChange",
+        "examples": [
+          {
+            "consent_type": "MARKETING_EMAIL",
+            "policy_version": "comms-2026.1",
+            "status": "WITHDRAWN"
+          }
+        ]
       },
       "AppConsentOut": {
         "properties": {
@@ -19326,7 +19651,14 @@
         "additionalProperties": false,
         "type": "object",
         "title": "AppProfileUpdate",
-        "description": "What a patient may change themselves. Legal name, date of birth and address are changed\nby staff, who check them first."
+        "description": "What a patient may change themselves. Legal name, date of birth and address are changed\nby staff, who check them first.",
+        "examples": [
+          {
+            "contact_by_push": true,
+            "contact_by_sms": false,
+            "preferred_name": "Maggie"
+          }
+        ]
       },
       "AppointmentCounts": {
         "properties": {
@@ -19936,7 +20268,14 @@
           "version"
         ],
         "title": "AppointmentUpdate",
-        "description": "Details only. Use /reschedule to change the time and the status endpoints for the lifecycle."
+        "description": "Details only. Use /reschedule to change the time and the status endpoints for the lifecycle.",
+        "examples": [
+          {
+            "mode": "PHONE",
+            "patient_instructions": "We will call you on your mobile.",
+            "version": 2
+          }
+        ]
       },
       "ArchiveDocument": {
         "properties": {
@@ -19952,7 +20291,12 @@
         "required": [
           "reason"
         ],
-        "title": "ArchiveDocument"
+        "title": "ArchiveDocument",
+        "examples": [
+          {
+            "reason": "Replaced by an updated care plan"
+          }
+        ]
       },
       "ArchiveRequest": {
         "properties": {
@@ -19968,7 +20312,12 @@
         "required": [
           "reason"
         ],
-        "title": "ArchiveRequest"
+        "title": "ArchiveRequest",
+        "examples": [
+          {
+            "reason": "Moved out of the service area"
+          }
+        ]
       },
       "AssignmentCreate": {
         "properties": {
@@ -20023,7 +20372,14 @@
         "required": [
           "assignment_type"
         ],
-        "title": "AssignmentCreate"
+        "title": "AssignmentCreate",
+        "examples": [
+          {
+            "assignment_type": "PRIMARY",
+            "staff_user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33",
+            "starts_on": "2026-10-01"
+          }
+        ]
       },
       "AssignmentOut": {
         "properties": {
@@ -20342,7 +20698,12 @@
         "required": [
           "reason"
         ],
-        "title": "CancelRequest"
+        "title": "CancelRequest",
+        "examples": [
+          {
+            "reason": "Patient admitted to hospital"
+          }
+        ]
       },
       "Caseload": {
         "properties": {
@@ -20451,7 +20812,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "title": "ConfirmUpload"
+        "title": "ConfirmUpload",
+        "examples": [
+          {
+            "checksum_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+          }
+        ]
       },
       "ConsentCreate": {
         "properties": {
@@ -21026,7 +21392,16 @@
           "name",
           "relationship"
         ],
-        "title": "EmergencyContactIn"
+        "title": "EmergencyContactIn",
+        "examples": [
+          {
+            "is_next_of_kin": true,
+            "name": "David Okafor",
+            "phone": "+44 7700 900789",
+            "priority": 1,
+            "relationship": "Son"
+          }
+        ]
       },
       "EmergencyContactOut": {
         "properties": {
@@ -21171,7 +21546,13 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "title": "EmergencyContactUpdate"
+        "title": "EmergencyContactUpdate",
+        "examples": [
+          {
+            "phone": "+44 7700 900790",
+            "priority": 2
+          }
+        ]
       },
       "ErrorBody": {
         "properties": {
@@ -21252,7 +21633,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "title": "KeyRotate"
+        "title": "KeyRotate",
+        "examples": [
+          {
+            "expires_in_days": 90
+          }
+        ]
       },
       "LoginRequest": {
         "properties": {
@@ -21771,7 +22157,14 @@
           "version"
         ],
         "title": "NoteUpdate",
-        "description": "Only the author can edit. The previous text is kept as a revision."
+        "description": "Only the author can edit. The previous text is kept as a revision.",
+        "examples": [
+          {
+            "body": "Spoke to patient and her son; managing well at home.",
+            "reason": "Added who was present",
+            "version": 1
+          }
+        ]
       },
       "NotificationCreate": {
         "properties": {
@@ -22359,7 +22752,17 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "title": "OrganisationUpdate"
+        "title": "OrganisationUpdate",
+        "examples": [
+          {
+            "settings": {
+              "retention": {
+                "patient_records_years": 10
+              }
+            },
+            "timezone": "Europe/London"
+          }
+        ]
       },
       "PageMeta": {
         "properties": {
@@ -22410,7 +22813,13 @@
           "current_password",
           "new_password"
         ],
-        "title": "PasswordChange"
+        "title": "PasswordChange",
+        "examples": [
+          {
+            "current_password": "DemoPass123!",
+            "new_password": "Harbour-Lantern-58"
+          }
+        ]
       },
       "PasswordResetConfirm": {
         "properties": {
@@ -22433,7 +22842,13 @@
           "token",
           "new_password"
         ],
-        "title": "PasswordResetConfirm"
+        "title": "PasswordResetConfirm",
+        "examples": [
+          {
+            "new_password": "Harbour-Lantern-58",
+            "token": "pr_9Kf2Ls7Qw1Xe4Rt8Yu3Io6Pa0Sd5Fg"
+          }
+        ]
       },
       "PasswordResetRequest": {
         "properties": {
@@ -22448,7 +22863,12 @@
         "required": [
           "email"
         ],
-        "title": "PasswordResetRequest"
+        "title": "PasswordResetRequest",
+        "examples": [
+          {
+            "email": "nurse@northfield.example"
+          }
+        ]
       },
       "PatientCreate": {
         "properties": {
@@ -22879,6 +23299,106 @@
         "title": "PatientOut",
         "description": "Fields marked (sensitive) are null unless the caller has patients:read_sensitive;\n`sensitive_fields_hidden` tells the client whether that happened."
       },
+      "PatientSearch": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "Page number, starting at 1",
+            "default": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "Items per page (max 100)",
+            "default": 25
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search",
+            "description": "Matches name, email, phone (and MRN if you may see it)"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE",
+                  "ARCHIVED"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Default: everything except ARCHIVED"
+          },
+          "assigned_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Staff Id"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort",
+            "description": "updated_at, created_at, legal_last_name, date_of_birth (prefix - for descending)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PatientSearch",
+        "examples": [
+          {
+            "page": 1,
+            "page_size": 25,
+            "search": "okafor",
+            "sort": "legal_last_name",
+            "status": "ACTIVE"
+          }
+        ]
+      },
       "PatientUpdate": {
         "properties": {
           "version": {
@@ -23104,7 +23624,14 @@
         "required": [
           "version"
         ],
-        "title": "PatientUpdate"
+        "title": "PatientUpdate",
+        "examples": [
+          {
+            "contact_by_sms": true,
+            "phone": "+44 7700 900999",
+            "version": 3
+          }
+        ]
       },
       "PermissionsResponse": {
         "properties": {
@@ -23205,7 +23732,12 @@
         "required": [
           "refresh_token"
         ],
-        "title": "RefreshRequest"
+        "title": "RefreshRequest",
+        "examples": [
+          {
+            "refresh_token": "rt_4mWq9Zb2Lr7Xc1Vn8Ty3Hs6Kd0Pf5Ga"
+          }
+        ]
       },
       "RescheduleRequest": {
         "properties": {
@@ -23258,7 +23790,15 @@
           "starts_at",
           "ends_at"
         ],
-        "title": "RescheduleRequest"
+        "title": "RescheduleRequest",
+        "examples": [
+          {
+            "ends_at": "2026-10-03T14:45:00+01:00",
+            "reason": "Nurse unavailable",
+            "starts_at": "2026-10-03T14:00:00+01:00",
+            "version": 2
+          }
+        ]
       },
       "RetentionSettings": {
         "properties": {
@@ -23331,7 +23871,12 @@
         "required": [
           "reason"
         ],
-        "title": "RetractRequest"
+        "title": "RetractRequest",
+        "examples": [
+          {
+            "reason": "Recorded against the wrong patient"
+          }
+        ]
       },
       "RoleGrant": {
         "properties": {
@@ -23346,7 +23891,12 @@
         "required": [
           "role_key"
         ],
-        "title": "RoleGrant"
+        "title": "RoleGrant",
+        "examples": [
+          {
+            "role_key": "COORDINATOR"
+          }
+        ]
       },
       "RoleResponse": {
         "properties": {
@@ -23431,7 +23981,16 @@
           "name",
           "role_keys"
         ],
-        "title": "ServiceAccountCreate"
+        "title": "ServiceAccountCreate",
+        "examples": [
+          {
+            "expires_in_days": 90,
+            "name": "outbox-worker",
+            "role_keys": [
+              "NOTIFICATION_WORKER"
+            ]
+          }
+        ]
       },
       "ServiceAccountResponse": {
         "properties": {
@@ -23981,7 +24540,14 @@
           "version"
         ],
         "title": "TaskUpdate",
-        "description": "Use /complete, /reopen and /cancel for those status changes."
+        "description": "Use /complete, /reopen and /cancel for those status changes.",
+        "examples": [
+          {
+            "due_at": "2026-10-04T12:00:00Z",
+            "status": "IN_PROGRESS",
+            "version": 1
+          }
+        ]
       },
       "TeamCreate": {
         "properties": {
@@ -24010,7 +24576,13 @@
         "required": [
           "name"
         ],
-        "title": "TeamCreate"
+        "title": "TeamCreate",
+        "examples": [
+          {
+            "name": "District Nursing North",
+            "service": "Community nursing"
+          }
+        ]
       },
       "TeamMemberAdd": {
         "properties": {
@@ -24025,7 +24597,12 @@
         "required": [
           "user_id"
         ],
-        "title": "TeamMemberAdd"
+        "title": "TeamMemberAdd",
+        "examples": [
+          {
+            "user_id": "5f1d7c3e-8b2a-4e61-a0c4-7d9e2b6f1a33"
+          }
+        ]
       },
       "TeamRef": {
         "properties": {
@@ -24537,6 +25114,107 @@
         ],
         "title": "UserResponse"
       },
+      "UserSearch": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "Page number, starting at 1",
+            "default": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "Items per page (max 100)",
+            "default": 25
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search",
+            "description": "Matches email or display name"
+          },
+          "user_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "STAFF",
+                  "SERVICE"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort",
+            "description": "email, display_name, created_at (prefix - for descending)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UserSearch",
+        "examples": [
+          {
+            "page": 1,
+            "page_size": 25,
+            "role": "CARE_STAFF",
+            "search": "nadia",
+            "status": "ACTIVE"
+          }
+        ]
+      },
       "UserUpdate": {
         "properties": {
           "display_name": {
@@ -24580,7 +25258,13 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "title": "UserUpdate"
+        "title": "UserUpdate",
+        "examples": [
+          {
+            "job_title": "Senior community nurse",
+            "phone": "+44 7700 900222"
+          }
+        ]
       }
     },
     "securitySchemes": {

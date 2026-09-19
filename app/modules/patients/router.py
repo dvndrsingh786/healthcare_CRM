@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.database import get_engine
+from app.errors import invalid
 from app.modules.patients import service
 from app.modules.patients.schemas import (
     AppAccountCreate,
@@ -19,6 +20,7 @@ from app.modules.patients.schemas import (
     PatientCreate,
     PatientList,
     PatientOut,
+    PatientSearch,
     PatientUpdate,
 )
 from app.pagination import page_params
@@ -45,10 +47,9 @@ def create_patient(data: PatientCreate, principal=Depends(require("patients:writ
 
 @router.get("/patients", response_model=PatientList)
 def list_patients(
-    search: str | None = Query(None, min_length=2, max_length=100,
-                               description="Matches name, email, phone (and MRN if you may see it)"),
     status: str | None = Query(None, pattern="(?i)^(active|inactive|archived)$",
                                description="ACTIVE, INACTIVE or ARCHIVED. Default: everything except ARCHIVED"),
+    search: str | None = Query(None, include_in_schema=False),
     assigned_staff_id: UUID | None = None,
     team_id: UUID | None = None,
     sort: str | None = Query(None, description="updated_at, created_at, legal_last_name, date_of_birth "
@@ -57,14 +58,29 @@ def list_patients(
     principal=Depends(can_read_patients),
     engine=Depends(get_engine),
 ):
-    """Search and filter the patients you may see. **Permission:** `patients:read_all`, or
+    """List and filter the patients you may see. **Permission:** `patients:read_all`, or
     `patients:read_assigned` (then only patients assigned to you or your teams).
 
-    Filters narrow your visible patients; they can never widen them.
+    Filters narrow your visible patients; they can never widen them. To search by name, email or
+    phone use `POST /patients/search`, which keeps the search text out of the URL.
     """
+    if search is not None:
+        # Refuse rather than ignore, so an old client does not silently get an unfiltered list.
+        raise invalid("Search text must not be sent in the URL. Use POST /api/v1/patients/search.", field="search")
     with engine.connect() as db:
-        return service.list_patients(db, principal, paging, search, status.upper() if status else None,
+        return service.list_patients(db, principal, paging, None, status.upper() if status else None,
                                      assigned_staff_id, team_id, sort)
+
+
+@router.post("/patients/search", response_model=PatientList)
+def search_patients(data: PatientSearch, principal=Depends(can_read_patients), engine=Depends(get_engine)):
+    """Search the patients you may see by name, email, phone (and MRN with `patients:read_sensitive`),
+    with the same filters as `GET /patients`. The search text is sent in the body so it never
+    appears in URLs or proxy logs. Nothing is created. **Permission:** `patients:read_all` or
+    `patients:read_assigned`."""
+    with engine.connect() as db:
+        return service.list_patients(db, principal, data.paging(), data.search, data.status,
+                                     data.assigned_staff_id, data.team_id, data.sort)
 
 
 @router.get("/patients/{patient_id}", response_model=PatientOut)

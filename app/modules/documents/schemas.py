@@ -31,9 +31,15 @@ class ConfirmUpload(StrictModel):
     checksum_sha256: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")] | None = Field(
         None, description="Optional: the SHA-256 you computed; the upload is rejected if it differs")
 
+    model_config = {"json_schema_extra": {"examples": [
+        {"checksum_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"},
+    ]}}
+
 
 class ArchiveDocument(StrictModel):
     reason: ShortText
+
+    model_config = {"json_schema_extra": {"examples": [{"reason": "Replaced by an updated care plan"}]}}
 
 
 class DocumentOut(Out):

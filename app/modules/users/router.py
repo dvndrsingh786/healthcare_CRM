@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.database import get_engine
+from app.errors import invalid
 from app.modules.auth.service import send_password_reset
 from app.modules.users import service
 from app.modules.users.schemas import (
@@ -24,6 +25,7 @@ from app.modules.users.schemas import (
     UserCreate,
     UserList,
     UserResponse,
+    UserSearch,
     UserStatus,
     UserUpdate,
 )
@@ -37,16 +39,29 @@ router = APIRouter(prefix="/api/v1", tags=["Users & RBAC"])
 def list_users(
     user_type: Literal["STAFF", "SERVICE"] | None = None,
     status: UserStatus | None = None,
+    search: str | None = Query(None, include_in_schema=False),
     role: str | None = Query(None, max_length=40),
-    search: str | None = Query(None, max_length=100, description="Matches email or display name"),
     sort: str | None = Query(None, description="email, display_name, created_at (prefix - for descending)"),
     paging=Depends(page_params),
     principal=Depends(require("users:read")),
     engine=Depends(get_engine),
 ):
-    """List staff and service accounts of your organisation. **Permission:** `users:read`."""
+    """List staff and service accounts of your organisation. To search by name or email use
+    `POST /users/search` (keeps the search text out of the URL). **Permission:** `users:read`."""
+    if search is not None:
+        # Refuse rather than ignore, so an old client does not silently get an unfiltered list.
+        raise invalid("Search text must not be sent in the URL. Use POST /api/v1/users/search.", field="search")
     with engine.connect() as db:
-        return service.list_users(db, principal, paging, user_type, status, role, search, sort)
+        return service.list_users(db, principal, paging, user_type, status, role, None, sort)
+
+
+@router.post("/users/search", response_model=UserList)
+def search_users(data: UserSearch, principal=Depends(require("users:read")), engine=Depends(get_engine)):
+    """Search staff and service accounts by email or display name, with the same filters as
+    `GET /users`. The search text is sent in the body, never in the URL. **Permission:** `users:read`."""
+    with engine.connect() as db:
+        return service.list_users(db, principal, data.paging(), data.user_type, data.status, data.role,
+                                  data.search, data.sort)
 
 
 @router.post("/users", status_code=201, response_model=UserResponse)
