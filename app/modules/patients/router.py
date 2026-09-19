@@ -1,5 +1,5 @@
-"""Patients, emergency contacts and patient app accounts (CRM side), plus the patient app's
-own-profile endpoints.
+"""Patients, emergency contacts and patient app accounts (CRM side). The patient app's own
+profile is in the app_api module.
 
 Every endpoint first checks the permission (require / require_any), then the service layer
 checks that the caller may see this particular patient (see access.py).
@@ -12,8 +12,6 @@ from app.database import get_engine
 from app.modules.patients import service
 from app.modules.patients.schemas import (
     AppAccountCreate,
-    AppProfileOut,
-    AppProfileUpdate,
     ArchiveRequest,
     EmergencyContactIn,
     EmergencyContactOut,
@@ -24,10 +22,9 @@ from app.modules.patients.schemas import (
     PatientUpdate,
 )
 from app.pagination import page_params
-from app.security import app_principal, require, require_any
+from app.security import require, require_any
 
 router = APIRouter(prefix="/api/v1", tags=["Patients"])
-app_router = APIRouter(prefix="/api/v1/app", tags=["Patient app"])
 
 # Anyone who can see at least some patients.
 can_read_patients = require_any("patients:read_all", "patients:read_assigned")
@@ -149,20 +146,3 @@ def delete_contact(patient_id: UUID, contact_id: UUID, principal=Depends(require
     with engine.begin() as db:
         service.delete_contact(db, principal, patient_id, contact_id)
     return Response(status_code=204)
-
-
-# ---------- Patient app ----------
-
-@app_router.get("/profile", response_model=AppProfileOut)
-def get_own_profile(principal=Depends(app_principal), engine=Depends(get_engine)):
-    """Your own patient profile. **Patient app only.**"""
-    with engine.connect() as db:
-        return service.find_own_patient(db, principal)
-
-
-@app_router.patch("/profile", response_model=AppProfileOut)
-def update_own_profile(data: AppProfileUpdate, principal=Depends(app_principal), engine=Depends(get_engine)):
-    """Change your preferred name, phone, language and how we may contact you. Legal name, date of
-    birth and address are changed by the care team. **Patient app only.**"""
-    with engine.begin() as db:
-        return service.update_own_profile(db, principal, data.model_dump(exclude_unset=True))

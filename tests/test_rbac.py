@@ -1,9 +1,7 @@
 """Roles, permissions, service accounts, scopes and tenant boundaries for users."""
-from fastapi.routing import APIRoute
-
 from app.main import app
 from app.security import get_principal
-from helpers import PASSWORD, audit_events, make_app_user
+from helpers import PASSWORD, api_routes, audit_events, make_app_user
 
 # The only routes that may be called without credentials.
 PUBLIC_ROUTES = {
@@ -18,9 +16,11 @@ def uses_dependency(dependant, target):
 
 def test_every_route_requires_authentication_by_default():
     """Default deny: a new endpoint without an auth dependency makes this test fail."""
+    routes = api_routes(app)
+    assert len(routes) > 90  # guard: the check below must really see the application's routes
     unprotected = [
-        route.path for route in app.routes
-        if isinstance(route, APIRoute) and route.path not in PUBLIC_ROUTES
+        route.path for route in routes
+        if route.path not in PUBLIC_ROUTES
         and not route.path.startswith("/api/v1/storage/")  # signed links, checked in test_documents.py
         and not uses_dependency(route.dependant, get_principal)
     ]
