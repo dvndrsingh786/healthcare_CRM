@@ -29,6 +29,14 @@ Prioritised security and data integrity first, as the sprint specification asks.
 | 16 | Cursor pagination for long histories | Timeline, audit and notification lists use page/offset, which is fine at sprint-1 volumes. |
 | 17 | Load and performance testing | Indexes were checked with `EXPLAIN`, not under load. Needs agreed volumes. |
 
+## Web app
+
+| # | Item | Why / current state |
+|---|---|---|
+| 18 | httpOnly refresh-token cookie | The web app keeps the refresh token in `sessionStorage` (per tab). An httpOnly, SameSite cookie set by the API would keep it out of reach of page scripts entirely. |
+| 19 | Patient mobile app | The patient API (`/api/v1/app`) is ready; the app itself (e.g. React Native) is not built. |
+| 20 | Accessibility audit and translations | Screens use accessible components and labels, but no formal WCAG audit or localisation has been done. |
+
 ## P3: product features (from the specification's next-sprint list)
 
 - Custom role administration and a break-glass access workflow with heightened audit and approval (the tables already support organisation-specific roles).

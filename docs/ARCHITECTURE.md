@@ -38,6 +38,7 @@ app/
     app_api/         the patient app's API boundary (/api/v1/app)
 migrations/          numbered SQL files, each with an up and a down section
 tests/               pytest, runs against a throwaway database
+frontend/            the staff web app (React + TypeScript), see below
 ```
 
 ## Key decisions and assumptions
@@ -161,6 +162,37 @@ Every change is a **new append-only row** that points to the one it replaces. Th
 ## The patient app boundary
 
 All app routes live under `/api/v1/app`, accept only `app`-scope sessions with `app:self`, and are rate limited per user. **No app URL contains a patient or user id** (a test enforces this): every query starts from the caller's own patient record, and only records explicitly marked for the app are returned (app-visible appointments, notes and documents). Another patient's appointment or document id gives the same 404 as a random id. Profile updates use an allow-list: preferred name, phone, language and channel preferences. Legal name, date of birth and address are changed by staff after verification.
+
+## The staff web app (frontend/)
+
+A single-page React + TypeScript app for CRM staff, served from the same origin as the API
+(the Vite dev server, `vite preview` or nginx in Docker forward `/api` to the API), so the
+browser needs no CORS and tokens never cross origins.
+
+- **Typed contract:** `src/api/schema.d.ts` is generated from `docs/openapi.json`
+  (`npm run api:types`); every call is type-checked against it, and CI fails if the backend's
+  OpenAPI document or the generated types drift from the code.
+- **Sessions:** the access token is kept in memory only; the refresh token in `sessionStorage`
+  (per tab, cleared when the tab closes) so a reload does not sign the user out. On a 401 the
+  client refreshes once, shared by all requests in flight (refresh tokens are single-use and
+  rotated), then retries; if the refresh fails the user is sent to the login page. A stricter
+  production option is an httpOnly refresh cookie set by the API (backlog).
+- **Permissions:** the menu, pages and buttons follow the caller's permissions from `/auth/me`
+  (`src/components/navigation.tsx`, `src/auth/permissions.ts`), mirroring the API. This is
+  only a convenience: the API enforces every rule on every request. Admin screens are shown
+  only to roles that manage users or teams.
+- **Data minimisation carries through:** fields the API returns as hidden (e.g. date of birth
+  for coordinators) are labelled "hidden for your role"; search text is sent in request bodies;
+  downloads use the API's short-lived signed links.
+- **Structure:** `src/pages/<area>/` screens, `src/components/` shared UI (layout, pickers,
+  dialogs), `src/api/` client, tokens and errors, `src/auth/` session and guards. Pages are
+  code-split and loaded on first visit.
+- **Security headers (Docker/nginx):** strict Content-Security-Policy (`script-src 'self'`,
+  no third-party origins), `frame-ancestors 'none'`, `nosniff`, `no-referrer`, `no-store` on the
+  HTML.
+- **Tests:** unit tests (vitest) for the token refresh logic, role menus, time-zone handling and
+  error display; Playwright browser tests for every role and the realistic scenarios, run in CI
+  against a freshly migrated and seeded API.
 
 ## Data lifecycle
 

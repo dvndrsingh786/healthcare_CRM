@@ -1,11 +1,12 @@
-# Local environment: PostgreSQL, the API and the notification worker.
+# Local environment: PostgreSQL, the API, the notification worker and the CRM web app.
 #   docker compose up -d db                 only the database (run the API with uvicorn yourself)
-#   docker compose up -d --build            everything
+#   docker compose up -d --build            everything (web app on http://localhost:3000)
 #   docker compose run --rm api python migrate.py
 #   docker compose run --rm api python seed.py
 # Values come from your .env file (copy .env.example). DB_HOST is overridden to reach the db container.
 # PostgreSQL already installed on this machine uses port 5432? Publish the container's database
 # on another port instead:  DB_PORT=55432 docker compose up -d   (PowerShell: $env:DB_PORT=55432)
+# API_PORT (default 8000) and WEB_PORT (default 3000) move the API and web app the same way.
 services:
   db:
     image: postgres:17
@@ -31,12 +32,21 @@ services:
       DB_PORT: "5432"
       STORAGE_DIR: /data/storage
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - storage:/data/storage
     depends_on:
       db:
         condition: service_healthy
+
+  web:
+    # The CRM web app on http://localhost:3000 (nginx serves it and forwards /api to the api service).
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:80"
+    depends_on:
+      - api
 
   worker:
     build: .

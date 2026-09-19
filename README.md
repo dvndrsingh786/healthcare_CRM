@@ -1,17 +1,19 @@
-# Healthcare CRM API
+# Healthcare CRM
 
 Backend for a healthcare CRM and its dedicated patient app: staff access and roles, patient
 records, assignments, appointments, tasks, notes with visibility controls, consent history,
-private documents, a notification outbox, and a searchable audit log.
+private documents, a notification outbox, and a searchable audit log. Plus a **staff web app**
+(the CRM screens) in [frontend/](frontend/).
 
-- **Stack:** Python 3.11+, FastAPI, PostgreSQL 16/17, SQLAlchemy Core (hand-written parameterised SQL), pytest
+- **API:** Python 3.11+, FastAPI, PostgreSQL 16/17, SQLAlchemy Core (hand-written parameterised SQL), pytest
+- **Web app:** React + TypeScript, Vite, Mantine UI, TanStack Query; typed API client generated from the OpenAPI document; Playwright browser tests
 - **API:** REST/JSON under `/api/v1`, 100 endpoints, OpenAPI at `/docs` (also committed as [docs/openapi.json](docs/openapi.json))
 - **Docs:** [Manual testing guide](docs/MANUAL_TESTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Demo checklist](docs/DEMO.md) · [Runbook](docs/RUNBOOK.md) · [Known limitations & backlog](docs/BACKLOG.md) · [Handover](docs/HANDOVER.md)
 
 ## Quick start with Docker (easiest way to try it)
 
 Only [Docker Desktop](https://www.docker.com/products/docker-desktop/) is needed: no Python and no
-PostgreSQL. Docker starts the database, the API and the notification worker for you.
+PostgreSQL. Docker starts the database, the API, the notification worker and the web app for you.
 (On Windows, Docker Desktop needs WSL 2. See [Troubleshooting](#troubleshooting) if it reports
 "Virtualization support not detected".)
 
@@ -48,7 +50,8 @@ docker compose up -d --build
 
 Already have PostgreSQL installed on this computer? It uses port 5432 too, so start with
 `$env:DB_PORT=55432; docker compose up -d --build` (PowerShell) or
-`DB_PORT=55432 docker compose up -d --build` (macOS/Linux).
+`DB_PORT=55432 docker compose up -d --build` (macOS/Linux). Ports 8000 (API) and 3000 (web app)
+can be moved the same way with `API_PORT` and `WEB_PORT`.
 
 **4. Create the tables and the demo data** (first time only):
 
@@ -57,8 +60,13 @@ docker compose run --rm api python migrate.py
 docker compose run --rm api python seed.py
 ```
 
-**5. Open http://127.0.0.1:8000/docs in your browser.** Log in with one of the [demo users](#demo-users-created-by-seedpy-demo-data-only)
-and follow the [manual testing guide](docs/MANUAL_TESTING.md).
+**5. Open it in your browser:**
+
+- **The CRM web app: http://localhost:3000** — sign in with one of the [demo users](#demo-users-created-by-seedpy-demo-data-only)
+  (password `DemoPass123!`) and click around as each role.
+- **The API documentation: http://127.0.0.1:8000/docs** — try every endpoint directly (Swagger).
+
+The [manual testing guide](docs/MANUAL_TESTING.md) walks through realistic scenarios in both.
 The notification worker already runs in the background; queued messages are sent within about 10 seconds.
 
 | To… | Run |
@@ -110,6 +118,28 @@ uvicorn app.main:app              # http://127.0.0.1:8000/docs (restart it after
 python manage.py process-notifications --loop    # the notification worker, in a second terminal
 ```
 
+## Web app (frontend)
+
+The staff CRM screens, in [frontend/](frontend/). With Docker it runs at http://localhost:3000.
+To work on it you need [Node.js 20+](https://nodejs.org/) and the API running on port 8000:
+
+```bash
+cd frontend
+npm install
+npm run dev              # http://localhost:5173 (calls to /api are forwarded to the API)
+```
+
+| Command (in `frontend/`) | What it does |
+|---|---|
+| `npm run build` / `npm run preview` | production build, served on http://localhost:4173 |
+| `npm run typecheck`, `npm run lint` | TypeScript and ESLint checks |
+| `npm test` | unit tests (token refresh, role menus, time zones, errors) |
+| `npm run e2e` | browser tests for every role and the realistic scenarios (needs the API with demo data and `npm run preview` running; `npx playwright install chromium` once) |
+| `npm run api:types` | regenerate the typed API client after the API changes (`python manage.py export-openapi` first) |
+
+The web app hides what a role may not do, but every rule is enforced by the API: the screens are a
+convenience, never the security control.
+
 ## Demo users (created by `seed.py`, demo data only)
 
 Password for all of them: `DemoPass123!` (override with `SEED_PASSWORD`).
@@ -140,7 +170,8 @@ mypy                   # type checks
 python scripts/demo.py # walks through every required workflow against a running, seeded API
 ```
 
-The same checks run on every push in GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
+The same checks run on every push in GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
+together with the web app's checks and the browser tests against a freshly seeded API.
 
 ## Operator commands
 
@@ -167,6 +198,7 @@ app/
     documents, timeline, notifications, summary, audit, app_api (the patient app), health
 migrations/            numbered SQL files with up and down sections
 tests/                 pytest (API + integration)
+frontend/              the staff web app (React + TypeScript), its unit and browser tests
 scripts/demo.py        scripted demo of the required workflows
 seed.py, manage.py     demo data and operator commands
 ```

@@ -1,7 +1,12 @@
 # Manual testing guide
 
-A step-by-step guide for trying the API by hand in the browser, with realistic scenarios.
-No programming needed: everything is done in the interactive API page (Swagger).
+A step-by-step guide for trying the system by hand, with realistic scenarios. No programming needed.
+There are two ways to test, and the same scenarios work in both:
+
+- **The CRM web app** (the staff screens): http://localhost:3000 with Docker, or http://localhost:5173
+  with `npm run dev`. The easiest way: see [Testing in the web app](#testing-in-the-web-app) below.
+- **Swagger** (the interactive API page at http://127.0.0.1:8000/docs): every endpoint, for checking
+  the API directly. The rest of this guide describes the Swagger steps.
 
 For the short reviewer checklist see [DEMO.md](DEMO.md). To run all checks automatically:
 `python scripts/demo.py`.
@@ -38,7 +43,39 @@ Password for all of them: **`DemoPass123!`**
 The demo data also contains patients Arthur Pembroke and Priya Shah, a team, appointments,
 tasks, notes, consents and a shared care-plan document.
 
-## How to log in
+## Testing in the web app
+
+Sign in at http://localhost:3000 (Docker) with a demo user and the password `DemoPass123!`. In
+development builds the login page lists the demo accounts under **Demo accounts**: click one to fill
+it in. Each role sees a different menu; everything is still enforced by the API.
+
+**Scenario 1 (appointment from booking to cancellation) in the web app**
+
+1. Sign in as `ops@northfield.example`. Open **Appointments**, move to a future week with **>**,
+   and click an empty time slot. The booking form opens with that time filled in.
+2. Choose the patient (type part of the name), the staff member **Nadia Nurse**, a location and an
+   internal note. Click **Book**. The appointment opens on the right, status **Scheduled**.
+   - Booking the same nurse at an overlapping time is refused with a clear message.
+3. Click **Reschedule**, change the time or length, add a reason. The history at the bottom shows it.
+4. Click **Cancel**, give a reason. The appointment is now **Cancelled** and cannot be changed.
+5. Sign out (top right menu) and sign in as `nurse@northfield.example`: the appointment is on the
+   patient's **Appointments** tab, and the nurse has no **Book** or **Cancel** buttons.
+6. Sign in as `admin@northfield.example`: **Audit log**, action `appointment.*`, **Search**.
+
+**Other scenarios in the web app**
+
+| Scenario | Where |
+|---|---|
+| 2. New patient | **Patients → New patient**. Leave a required field empty (refused), give a future date of birth (refused), then save. Save the same name and birth date again: **Possible duplicate** warning. On the patient: **Consent → Record consent**, **Care team → Assign** the nurse. |
+| 3. Who can see what | Sign in as each demo user and compare the menu and the **Patients** list. The coordinator sees no date of birth or address; the System Admin sees no patients at all. |
+| 4. Clinical notes | As the nurse: patient → **Notes → Add note**, "Who can see it" = **Clinical**. As the coordinator the note is not listed. **Edit** your own note: **Earlier versions** keeps the old text. |
+| 5. Messages | As ops: patient → **Messages → Send message**. With Docker the worker sends it within seconds (**Sent**). |
+| 6. Follow-up task | **Tasks → New task**, owner Nadia Nurse, due in the past. As the nurse: **My tasks** with **Overdue only**, then the ✓ button. |
+| 7. Consent history | Patient → **Consent**: current state on top, every change kept below. |
+| 8. Documents | Patient → **Documents → Upload** (a PDF, PNG or JPEG), then the download button. The coordinator has no Documents tab. |
+| 9. Admin | As `admin@`: **Users & roles** (create, roles, deactivate), **Service accounts** (key shown once), **Audit log**, **Organisation**. |
+
+## How to log in (Swagger)
 
 1. In the **Auth** section open **`POST /api/v1/auth/login`** and click **Try it out**.
 2. Replace the body with:
