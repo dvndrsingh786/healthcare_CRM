@@ -225,6 +225,12 @@ def build_messages(db, row):
         return None, "PATIENT_NOT_ACTIVE"
     if not opted_in(contact, channel) and not (row["transactional"] and transactional_overrides_opt_out(contact)):
         return None, "OPTED_OUT"
+    if not row["transactional"] and channel in ("EMAIL", "SMS"):
+        # Non-care messages also need the patient's marketing consent for that channel.
+        from app.modules.consents.service import current_consent
+        consent = current_consent(db, row["patient_id"], f"MARKETING_{channel}")
+        if consent is None or consent["effective_status"] != "GRANTED":
+            return None, "NO_CONSENT"
     subject, body = render(row["template_key"], contact["organisation_name"])
 
     def message(to, key):

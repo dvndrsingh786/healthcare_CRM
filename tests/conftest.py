@@ -83,3 +83,14 @@ def sent_messages():
     set_provider(provider)
     yield provider.sent
     set_provider(ConsoleProvider())
+
+
+@pytest.fixture(autouse=True)
+def private_storage(tmp_path):
+    """Uploaded test files go to a temporary folder, never to the project's storage/."""
+    from app.storage import LocalStorage, NoScanner, set_scanner, set_storage
+    storage = LocalStorage(tmp_path / "storage")
+    set_storage(storage)
+    yield storage
+    set_storage(None)
+    set_scanner(NoScanner())

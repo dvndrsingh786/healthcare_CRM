@@ -91,3 +91,26 @@ def check_patient_link(db, principal, patient_id, field="patient_id"):
         log_denied_patient_access(db, principal, patient_id)
         raise invalid("No such patient in your organisation, or you do not have access to it.", field=field)
     return row
+
+
+# ---------- Visibility classes of notes and documents ----------
+
+def readable_visibilities(principal, read_permission):
+    """Which visibility classes the caller may read. read_permission is notes:read or documents:read.
+    CLINICAL content additionally needs notes:read_clinical (support roles and the app never have it)."""
+    from app.security import has
+
+    if not has(principal, read_permission):
+        return []
+    classes = ["INTERNAL", "APP_VISIBLE"]
+    if has(principal, "notes:read_clinical"):
+        classes.append("CLINICAL")
+    return classes
+
+
+def visibility_condition(column, classes):
+    """SQL condition limiting `column` to the given classes. The class names come from the list
+    above (fixed strings), never from the request."""
+    if not classes:
+        return "false"
+    return f"{column} IN ({', '.join(repr(c) for c in classes)})"

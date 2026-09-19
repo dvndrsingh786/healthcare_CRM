@@ -198,3 +198,21 @@ def app_principal(request: Request, principal=Depends(get_principal), engine=Dep
 
 def has(principal, permission):
     return permission in principal["permissions"]
+
+
+def principal_for_user(db, user_id, scope):
+    """Rebuild a principal from a user id (used by signed download links, which must re-check
+    the user's CURRENT status and permissions). None if the user can no longer act."""
+    row = db.execute(
+        text("""
+            SELECT users.id AS user_id, users.organisation_id, users.user_type, users.email
+            FROM users JOIN organisations ON organisations.id = users.organisation_id
+            WHERE users.id = :id AND users.status = 'ACTIVE' AND organisations.status = 'ACTIVE'
+        """),
+        {"id": user_id},
+    ).mappings().first()
+    if row is None or scope != ("app" if row["user_type"] == "PATIENT" else "crm"):
+        return None
+    principal = dict(row, scope=scope, session_id=None, api_key_id=None)
+    principal["permissions"] = load_permissions(db, row["user_id"], row["user_type"])
+    return principal
