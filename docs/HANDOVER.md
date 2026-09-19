@@ -5,7 +5,7 @@ Filled in from the specification's handover template (§17).
 | Field | Status |
 |---|---|
 | **Branch / PR** | `main` on [github.com/dvndrsingh786/healthcare_CRM](https://github.com/dvndrsingh786/healthcare_CRM), one commit per sprint day (foundation → identity & access → patients → appointments/tasks/outbox → notes/consent/documents/timeline → app API/audit → hardening → handover). |
-| **Environment tested** | Windows 11, Python 3.14, PostgreSQL 17 (local). CI: Ubuntu, Python 3.12, PostgreSQL 17 (GitHub Actions, green). End-to-end demo (`scripts/demo.py`) run against a live `uvicorn` server with seeded data. |
+| **Environment tested** | Windows 11, Python 3.14, PostgreSQL 17 (local). CI: Ubuntu, Python 3.12, PostgreSQL 17 (GitHub Actions, green). End-to-end demo (`scripts/demo.py`) run against a live `uvicorn` server with seeded data, and again against the full `docker compose` stack (db + api + worker; migrate and seed inside the containers). |
 | **Database migration version** | `008_create_notes_consents_documents.sql` (8 migrations, all with tested down sections). |
 | **Implemented modules** | auth, users & RBAC (incl. teams, service accounts), organisations, patients (+ emergency contacts, app accounts), assignments & caseload, appointments, tasks, notes/interactions, consent, documents & private storage, timeline, notifications (outbox, worker, devices), CRM summary, audit search, patient app API, health. 100 endpoints. |
 | **Automated test result** | `pytest`: 94 passed. `ruff check .`: clean. `mypy`: no issues (77 files). All mandatory scenarios in spec §11 have a named test (see [DEMO.md](DEMO.md)). |

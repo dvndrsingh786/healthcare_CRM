@@ -116,6 +116,8 @@ seed.py, manage.py     demo data and operator commands
 | `Set DB_PASSWORD in your .env file` | Copy `.env.example` to `.env` and fill it in. |
 | `SECRET_KEY must be at least 32 characters` | Generate one with the command above. |
 | `connection refused` / readiness returns 503 | PostgreSQL is not running, or `DB_HOST`/`DB_PORT` are wrong. |
+| `docker compose`: port 5432 is already allocated | PostgreSQL is already installed on this machine. Publish the container's database on another port: `DB_PORT=55432 docker compose up -d` (PowerShell: `$env:DB_PORT=55432; docker compose up -d`). |
+| Docker Desktop: "Virtualization support not detected" (Windows) | Install WSL 2 in an administrator PowerShell with `wsl --install --no-distribution`, restart, then start Docker Desktop. If it persists, enable Intel VT-x / AMD-V in the BIOS. |
 | `permission denied to create extension` | The migration needs `pg_trgm` and `btree_gist`. Run as the database owner, or have an admin run `CREATE EXTENSION pg_trgm; CREATE EXTENSION btree_gist;` once. |
 | Tests fail with `permission denied to create database` | The test user needs `CREATEDB` (the default `postgres` user has it). |
 | `429 RATE_LIMITED` on login while testing | Five attempts per minute per email and IP (`LOGIN_RATE_LIMIT_PER_MINUTE`). Wait a minute. |

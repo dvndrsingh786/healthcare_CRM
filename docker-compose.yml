@@ -4,6 +4,8 @@
 #   docker compose run --rm api python migrate.py
 #   docker compose run --rm api python seed.py
 # Values come from your .env file (copy .env.example). DB_HOST is overridden to reach the db container.
+# PostgreSQL already installed on this machine uses port 5432? Publish the container's database
+# on another port instead:  DB_PORT=55432 docker compose up -d   (PowerShell: $env:DB_PORT=55432)
 services:
   db:
     image: postgres:17
@@ -22,6 +24,7 @@ services:
 
   api:
     build: .
+    restart: unless-stopped
     env_file: .env
     environment:
       DB_HOST: db
@@ -38,6 +41,9 @@ services:
   worker:
     build: .
     command: ["python", "manage.py", "process-notifications", "--loop", "--interval", "10"]
+    # The worker keeps retrying if the database is not ready yet (e.g. before migrations);
+    # restart covers anything else that stops it.
+    restart: unless-stopped
     env_file: .env
     environment:
       DB_HOST: db

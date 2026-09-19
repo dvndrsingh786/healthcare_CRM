@@ -47,7 +47,8 @@ def process_notifications(args):
     from app.modules.notifications.service import process_due
 
     engine = get_engine()
-    while True:
+
+    def run_once():
         with engine.connect() as db:
             organisations = db.execute(text("SELECT id FROM organisations WHERE status = 'ACTIVE'")).scalars().all()
         totals = {}
@@ -56,9 +57,18 @@ def process_notifications(args):
                       "permissions": frozenset({"notifications:process"})}
             for key, value in process_due(engine, worker, args.batch).items():
                 totals[key] = totals.get(key, 0) + value
-        print(json.dumps(totals))
-        if not args.loop:
-            return
+        print(json.dumps(totals), flush=True)
+
+    if not args.loop:
+        run_once()
+        return
+    while True:
+        try:
+            run_once()
+        except Exception as error:  # a long-running worker must survive a database outage
+            # Only the error type: messages can contain SQL or data. Leased rows are retried
+            # automatically once their lease runs out, so nothing is lost.
+            print(json.dumps({"error": type(error).__name__}), file=sys.stderr, flush=True)
         time.sleep(args.interval)
 
 
