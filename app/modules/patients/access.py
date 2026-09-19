@@ -36,13 +36,32 @@ def patient_scope(principal, alias="p"):
     return "false", params
 
 
-def log_denied_patient_access(db, principal, patient_id):
-    """If the id belongs to a real patient the caller may not see, keep a record of the attempt."""
-    exists = db.execute(text("SELECT 1 FROM patients WHERE id = :id"), {"id": patient_id}).first()
+# Tables whose rows can be the target of a denied lookup. The table name always comes from here,
+# never from the request.
+AUDITED_TABLES = {"patient": "patients", "appointment": "appointments", "task": "tasks", "note": "notes",
+                  "document": "documents", "notification": "notifications"}
+
+
+def log_denied_access(db, principal, resource_type, resource_id):
+    """If the id belongs to a real record the caller may not see, keep a record of the attempt.
+    Guessing random ids that do not exist is not logged (there is nothing to protect)."""
+    table = AUDITED_TABLES[resource_type]
+    exists = db.execute(text(f"SELECT 1 FROM {table} WHERE id = :id"), {"id": resource_id}).first()
     if exists:
         # Own transaction: this request is about to fail with 404, which rolls back the main one.
-        record_event_now(db.engine, principal, "access.denied", "patient", patient_id, outcome=DENIED,
-                         metadata={"reason": "patient_not_visible"})
+        record_event_now(db.engine, principal, "access.denied", resource_type, resource_id, outcome=DENIED,
+                         metadata={"reason": f"{resource_type}_not_visible"})
+
+
+def log_denied_patient_access(db, principal, patient_id):
+    log_denied_access(db, principal, "patient", patient_id)
+
+
+def visible_patient_condition(principal, patient_column):
+    """SQL condition: the patient in `patient_column` is one the caller may see.
+    For records that point to a patient (appointments, notes, documents...)."""
+    condition, params = patient_scope(principal, "vp")
+    return f"EXISTS (SELECT 1 FROM patients vp WHERE vp.id = {patient_column} AND {condition})", params
 
 
 def find_patient(db, principal, patient_id, lock=False):

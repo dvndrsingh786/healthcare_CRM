@@ -5,12 +5,16 @@ from app.config import get_settings
 from app.errors import ERROR_RESPONSES, add_error_handlers
 from app.logging_setup import setup_logging
 from app.middleware import RequestContextMiddleware
+from app.modules.appointments.router import router as appointments_router
 from app.modules.assignments.router import router as assignments_router
 from app.modules.auth.router import router as auth_router
 from app.modules.health.router import router as health_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.organisations.router import router as organisations_router
 from app.modules.patients.router import app_router as patient_app_router
 from app.modules.patients.router import router as patients_router
+from app.modules.summary.router import router as summary_router
+from app.modules.tasks.router import router as tasks_router
 from app.modules.users.router import router as users_router
 
 settings = get_settings()
@@ -46,5 +50,6 @@ app.add_middleware(
 app.add_middleware(RequestContextMiddleware, hsts=settings.is_production)
 
 for router in [health_router, auth_router, organisations_router, users_router, patients_router,
-               assignments_router, patient_app_router]:
+               assignments_router, appointments_router, tasks_router, notifications_router, summary_router,
+               patient_app_router]:
     app.include_router(router, responses=ERROR_RESPONSES)

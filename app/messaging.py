@@ -33,12 +33,17 @@ class ProviderError(Exception):
 class ConsoleProvider:
     def __init__(self):
         self.sent = []  # used by tests and local demos
+        self.delivered = {}  # idempotency_key -> provider message id
 
     def send(self, message: OutgoingMessage):
+        # Like real providers: the same idempotency key is delivered once; a retry gets the same id back.
+        if message.idempotency_key in self.delivered:
+            return self.delivered[message.idempotency_key]
         self.sent.append(message)
         # Never log the address or the body: they can contain personal data or a reset link.
         logger.info("message_sent", extra={"channel": message.channel, "template": message.template_key})
-        return "console-" + secrets.token_hex(8)
+        self.delivered[message.idempotency_key] = "console-" + secrets.token_hex(8)
+        return self.delivered[message.idempotency_key]
 
 
 _provider = ConsoleProvider()

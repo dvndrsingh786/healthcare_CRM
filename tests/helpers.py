@@ -78,3 +78,43 @@ def make_patient(client, org, **overrides):
     response = client.post("/api/v1/patients", headers=org["ops"]["headers"], json=patient_body(**overrides))
     assert response.status_code == 201, response.text
     return response.json()
+
+
+def at(hours=0, days=0, minutes=0):
+    """An ISO time relative to now, with an explicit UTC offset."""
+    from datetime import UTC, datetime, timedelta
+    return (datetime.now(UTC) + timedelta(days=days, hours=hours, minutes=minutes)).isoformat()
+
+
+def make_appointment(client, org, patient_id, staff_key="care", start_hours=24, length_minutes=45, headers=None,
+                     **overrides):
+    body = {"patient_id": patient_id, "staff_user_id": org[staff_key]["id"] if staff_key else None,
+            "starts_at": at(hours=start_hours), "ends_at": at(hours=start_hours, minutes=length_minutes),
+            "appointment_type": "HOME_VISIT", "location": "Patient's home",
+            "patient_instructions": "Have your medication list ready.", "internal_note": "Staff only: dog on site"}
+    body.update(overrides)
+    response = client.post("/api/v1/appointments", headers=headers or org["ops"]["headers"], json=body)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def move_to_past(engine, appointment_id, hours_ago=2):
+    """Tests only: pretend an appointment already started (the API refuses to book in the past)."""
+    with engine.begin() as db:
+        db.execute(text("UPDATE appointments SET starts_at = now() - make_interval(hours => :h), "
+                        "ends_at = now() - make_interval(hours => :h) + interval '30 minutes' WHERE id = :id"),
+                   {"h": hours_ago, "id": appointment_id})
+
+
+def assign_patient(client, org, patient_id, staff_key="care", assignment_type="PRIMARY"):
+    response = client.post(f"/api/v1/patients/{patient_id}/assignments", headers=org["ops"]["headers"],
+                           json={"staff_user_id": org[staff_key]["id"], "assignment_type": assignment_type})
+    assert response.status_code == 201, response.text
+
+
+def make_worker(client, org):
+    """A NOTIFICATION_WORKER service account. Returns headers with its API key."""
+    response = client.post("/api/v1/service-accounts", headers=org["sysadmin"]["headers"], json={
+        "name": "outbox-worker", "role_keys": ["NOTIFICATION_WORKER"], "expires_in_days": 30})
+    assert response.status_code == 201, response.text
+    return {"X-API-Key": response.json()["key"]["api_key"]}
