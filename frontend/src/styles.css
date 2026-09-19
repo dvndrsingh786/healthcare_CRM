@@ -1,0 +1,20 @@
+/* FullCalendar in the app's colours. */
+:root {
+  --fc-button-bg-color: var(--mantine-color-teal-6);
+  --fc-button-border-color: var(--mantine-color-teal-6);
+  --fc-button-hover-bg-color: var(--mantine-color-teal-7);
+  --fc-button-hover-border-color: var(--mantine-color-teal-7);
+  --fc-button-active-bg-color: var(--mantine-color-teal-8);
+  --fc-button-active-border-color: var(--mantine-color-teal-8);
+  --fc-today-bg-color: var(--mantine-color-teal-0);
+}
+.fc .fc-toolbar-title {
+  font-size: 1.25rem;
+}
+.fc .fc-event {
+  cursor: pointer;
+}
+.fc .appointment-cancelled {
+  text-decoration: line-through;
+  opacity: 0.7;
+}

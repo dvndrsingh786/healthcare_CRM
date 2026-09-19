@@ -1,0 +1,34 @@
+import type { components } from "./schema";
+
+type Schemas = components["schemas"];
+
+export type Me = Schemas["MeResponse"];
+export type User = Schemas["UserResponse"];
+export type Role = Schemas["RoleResponse"];
+export type Team = Schemas["TeamResponse"];
+export type Organisation = Schemas["OrganisationResponse"];
+export type Patient = Schemas["PatientOut"];
+export type PatientCreate = Schemas["PatientCreate"];
+export type EmergencyContact = Schemas["EmergencyContactOut"];
+export type Assignment = Schemas["AssignmentOut"];
+export type Appointment = Schemas["AppointmentOut"];
+export type AppointmentEvent = Schemas["AppointmentEventOut"];
+export type Task = Schemas["TaskOut"];
+export type Note = Schemas["NoteOut"];
+export type NoteRevision = Schemas["NoteRevisionOut"];
+export type Consent = Schemas["ConsentOut"];
+export type DocumentMeta = Schemas["DocumentOut"];
+export type Notification = Schemas["NotificationOut"];
+export type NotificationDetail = Schemas["NotificationDetail"];
+export type AuditEvent = Schemas["AuditEventOut"];
+export type TimelineEntry = Schemas["TimelineEntry"];
+export type Summary = Schemas["Summary"];
+export type PageMeta = Schemas["PageMeta"];
+export type CaseloadEntry = Schemas["CaseloadEntry"];
+export type AppointmentType = Schemas["AppointmentCreate"]["appointment_type"];
+export type AppointmentMode = NonNullable<Schemas["AppointmentCreate"]["mode"]>;
+export type Visibility = Schemas["NoteCreate"]["visibility"];
+export type NoteType = NonNullable<Schemas["NoteCreate"]["note_type"]>;
+export type TaskPriority = NonNullable<Schemas["TaskCreate"]["priority"]>;
+export type DocumentCategory = Schemas["UploadIntent"]["category"];
+export type ConsentType = Schemas["ConsentCreate"]["consent_type"];
