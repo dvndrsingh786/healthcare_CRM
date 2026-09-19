@@ -8,15 +8,80 @@ private documents, a notification outbox, and a searchable audit log.
 - **API:** REST/JSON under `/api/v1`, 100 endpoints, OpenAPI at `/docs` (also committed as [docs/openapi.json](docs/openapi.json))
 - **Docs:** [Manual testing guide](docs/MANUAL_TESTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Demo checklist](docs/DEMO.md) · [Runbook](docs/RUNBOOK.md) · [Known limitations & backlog](docs/BACKLOG.md) · [Handover](docs/HANDOVER.md)
 
-## Prerequisites
+## Quick start with Docker (easiest way to try it)
+
+Only [Docker Desktop](https://www.docker.com/products/docker-desktop/) is needed: no Python and no
+PostgreSQL. Docker starts the database, the API and the notification worker for you.
+(On Windows, Docker Desktop needs WSL 2. See [Troubleshooting](#troubleshooting) if it reports
+"Virtualization support not detected".)
+
+**1. Get the code**
+
+```bash
+git clone https://github.com/dvndrsingh786/healthcare_CRM.git
+cd healthcare_CRM
+```
+
+**2. Create the settings file.** Copy the template, then open `.env` in any text editor and fill in two values:
+`DB_PASSWORD` (any password you choose; Docker creates the database with it) and `SECRET_KEY`
+(a long random value; the commands below print one to paste in).
+
+Windows (PowerShell):
+
+```powershell
+Copy-Item .env.example .env
+$bytes = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); [Convert]::ToBase64String($bytes)
+```
+
+macOS / Linux:
+
+```bash
+cp .env.example .env
+openssl rand -base64 48
+```
+
+**3. Start everything** (the first run downloads and builds for a few minutes):
+
+```bash
+docker compose up -d --build
+```
+
+Already have PostgreSQL installed on this computer? It uses port 5432 too, so start with
+`$env:DB_PORT=55432; docker compose up -d --build` (PowerShell) or
+`DB_PORT=55432 docker compose up -d --build` (macOS/Linux).
+
+**4. Create the tables and the demo data** (first time only):
+
+```bash
+docker compose run --rm api python migrate.py
+docker compose run --rm api python seed.py
+```
+
+**5. Open http://127.0.0.1:8000/docs in your browser.** Log in with one of the [demo users](#demo-users-created-by-seedpy-demo-data-only)
+and follow the [manual testing guide](docs/MANUAL_TESTING.md).
+The notification worker already runs in the background; queued messages are sent within about 10 seconds.
+
+| To… | Run |
+|---|---|
+| See what is running | `docker compose ps` |
+| Watch the API log | `docker compose logs -f api` |
+| Stop (keeps the data) | `docker compose stop` |
+| Start again later | `docker compose up -d` (with `DB_PORT` as above if needed) |
+| Remove everything, including the Docker database | `docker compose down -v` |
+
+## Developer setup (without Docker)
+
+For working on the code: run the API directly with Python and your own PostgreSQL.
+
+### Prerequisites
 
 - Python 3.11 or newer
 - PostgreSQL 16 or 17 with the standard contrib extensions (`pg_trgm`, `btree_gist`; included in the
   official installers and Docker image). The database user needs to own the database.
   For the test suite it must also be able to create databases (the default `postgres` user can).
-- Or Docker, for the database (and optionally the API)
+- Or Docker, for the database only (`docker compose up -d db`)
 
-## Setup
+### Setup
 
 ```bash
 git clone https://github.com/dvndrsingh786/healthcare_CRM.git
@@ -36,19 +101,16 @@ Then create the database if needed (Docker creates it for you):
 psql -U postgres -c "CREATE DATABASE healthcare_crm"
 ```
 
-## Migrate, seed, run
+### Migrate, seed, run
 
 ```bash
 python migrate.py                 # apply all migrations (python migrate.py status / down [n])
 python seed.py                    # demo organisations, users and data (development only)
-uvicorn app.main:app --reload     # http://127.0.0.1:8000/docs
+uvicorn app.main:app              # http://127.0.0.1:8000/docs (restart it after code changes)
 python manage.py process-notifications --loop    # the notification worker, in a second terminal
 ```
 
-Everything in Docker instead: `docker compose up -d --build`, then
-`docker compose run --rm api python migrate.py` and `docker compose run --rm api python seed.py`.
-
-### Demo users (created by `seed.py`, demo data only)
+## Demo users (created by `seed.py`, demo data only)
 
 Password for all of them: `DemoPass123!` (override with `SEED_PASSWORD`).
 

@@ -8,13 +8,16 @@ For the short reviewer checklist see [DEMO.md](DEMO.md). To run all checks autom
 
 ## Before you start
 
-The API must be running with the demo data (see the [README](../README.md)):
+The API must be running with the demo data. Either:
 
-```
-python migrate.py
-python seed.py          (only once, on an empty database)
-uvicorn app.main:app
-```
+- **With Docker** (nothing else to install): follow the
+  [Quick start with Docker](../README.md#quick-start-with-docker-easiest-way-to-try-it) in the README, or
+- **Without Docker** (Python and PostgreSQL installed):
+  ```
+  python migrate.py
+  python seed.py          (only once, on an empty database)
+  uvicorn app.main:app
+  ```
 
 Open **http://127.0.0.1:8000/docs** in your browser.
 
