@@ -14,12 +14,17 @@ PROJECT_FOLDER = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_FOLDER / ".env")
 
 
+def _get(name, default=""):
+    # An empty value (e.g. "STORAGE_DIR=" copied from .env.example) means "use the default".
+    return os.getenv(name) or default
+
+
 def _int(name, default):
-    return int(os.getenv(name, str(default)))
+    return int(_get(name, str(default)))
 
 
 def _list(name, default=""):
-    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+    return [item.strip() for item in _get(name, default).split(",") if item.strip()]
 
 
 @dataclass(frozen=True)
@@ -60,8 +65,8 @@ def get_settings():
         raise ValueError("SECRET_KEY must be at least 32 characters long.")
 
     return Settings(
-        environment=os.getenv("ENVIRONMENT", "development"),
-        db_host=os.getenv("DB_HOST", "127.0.0.1"),
+        environment=_get("ENVIRONMENT", "development"),
+        db_host=_get("DB_HOST", "127.0.0.1"),
         db_port=_int("DB_PORT", 5432),
         db_name=os.environ["DB_NAME"],
         db_user=os.environ["DB_USER"],
@@ -73,7 +78,7 @@ def get_settings():
         login_rate_limit_per_minute=_int("LOGIN_RATE_LIMIT_PER_MINUTE", 5),
         app_rate_limit_per_minute=_int("APP_RATE_LIMIT_PER_MINUTE", 120),
         cors_origins=_list("CORS_ORIGINS"),
-        storage_dir=Path(os.getenv("STORAGE_DIR", str(PROJECT_FOLDER / "storage"))),
+        storage_dir=Path(_get("STORAGE_DIR", str(PROJECT_FOLDER / "storage"))),
         max_upload_bytes=_int("MAX_UPLOAD_BYTES", 10 * 1024 * 1024),
         signed_url_seconds=_int("SIGNED_URL_SECONDS", 300),
         notification_max_attempts=_int("NOTIFICATION_MAX_ATTEMPTS", 5),

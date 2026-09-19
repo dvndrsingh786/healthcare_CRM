@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # CI-only throwaway values. Real secrets never live in the repository.
+      ENVIRONMENT: test
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      DB_NAME: healthcare_crm
+      DB_USER: postgres
+      DB_PASSWORD: ci-only-password
+      SECRET_KEY: ci-only-secret-key-not-used-anywhere-else-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Type check
+        run: mypy
+      - name: Tests (each run creates and drops its own database)
+        run: pytest -q
+      - name: Migrations apply to an empty database
+        run: |
+          PGPASSWORD=$DB_PASSWORD psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE healthcare_crm"
+          python migrate.py
+          python migrate.py status

@@ -7,6 +7,7 @@ authentication, forbidden, conflict and temporary failures apart without parsing
 We never send stack traces, SQL or submitted values back to the client.
 """
 import logging
+from typing import Any
 
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -77,7 +78,7 @@ def _example(code, message):
 
 
 # Added to every router in main.py, so /docs lists the possible errors for each endpoint.
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {"model": ErrorResponse, "description": "Body is not valid JSON (INVALID_JSON)",
           "content": _example("INVALID_JSON", "The request body is not valid JSON.")},
     401: {"model": ErrorResponse, "description": "Missing, invalid, expired or revoked credentials (UNAUTHENTICATED)",

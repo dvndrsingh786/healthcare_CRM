@@ -67,3 +67,18 @@ def test_migrations_roll_back_and_forward_on_an_empty_database(test_engine):
         with admin.connect() as db:
             db.execute(text(f'DROP DATABASE "{name}" WITH (FORCE)'))
         admin.dispose()
+
+
+def test_empty_settings_fall_back_to_safe_defaults(monkeypatch):
+    """STORAGE_DIR= (empty, as in .env.example) must not mean "the current folder"."""
+    from app.config import PROJECT_FOLDER, get_settings
+
+    monkeypatch.setenv("STORAGE_DIR", "")
+    monkeypatch.setenv("SIGNED_URL_SECONDS", "")
+    get_settings.cache_clear()
+    try:
+        settings = get_settings()
+        assert settings.storage_dir == PROJECT_FOLDER / "storage"
+        assert settings.signed_url_seconds == 300
+    finally:
+        get_settings.cache_clear()

@@ -1,0 +1,51 @@
+# Local environment: PostgreSQL, the API and the notification worker.
+#   docker compose up -d db                 only the database (run the API with uvicorn yourself)
+#   docker compose up -d --build            everything
+#   docker compose run --rm api python migrate.py
+#   docker compose run --rm api python seed.py
+# Values come from your .env file (copy .env.example). DB_HOST is overridden to reach the db container.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_DB: ${DB_NAME:-healthcare_crm}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"   # local machine only
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      STORAGE_DIR: /data/storage
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["python", "manage.py", "process-notifications", "--loop", "--interval", "10"]
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  storage:

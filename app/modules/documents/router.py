@@ -7,6 +7,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 
 from app.config import get_settings
+from app.context import current_client
 from app.database import get_engine
 from app.errors import ApiError
 from app.modules.documents import service
@@ -22,6 +23,7 @@ from app.modules.documents.schemas import (
     UploadIntentOut,
 )
 from app.pagination import page_params
+from app.rate_limit import check_rate_limit
 from app.security import require
 
 router = APIRouter(prefix="/api/v1", tags=["Documents"])
@@ -91,9 +93,18 @@ def archive_document(document_id: UUID, data: ArchiveDocument, principal=Depends
 
 # ---------- Signed links (no bearer token: the signed token is the credential) ----------
 
+# Public routes, so they are rate limited per client IP like login.
+STORAGE_REQUESTS_PER_MINUTE = 60
+
+
+def limit_storage_requests(engine):
+    check_rate_limit(engine, f"storage:{current_client()['ip_address'] or 'unknown'}", STORAGE_REQUESTS_PER_MINUTE)
+
+
 @storage_router.put("/upload/{token}", status_code=204)
 async def upload(token: str, request: Request, engine=Depends(get_engine)):
     """Step 2: send the raw file bytes. Single use; the size must match what was declared."""
+    await run_in_threadpool(limit_storage_requests, engine)
     declared = request.headers.get("content-length")
     if declared and declared.isdigit() and int(declared) > get_settings().max_upload_bytes:
         raise ApiError(413, "PAYLOAD_TOO_LARGE", "The file is too large.")
@@ -112,6 +123,7 @@ async def upload(token: str, request: Request, engine=Depends(get_engine)):
 def download(token: str, engine=Depends(get_engine)):
     """Stream a document. The link must be valid and unexpired, AND the person it was issued to
     must still have access to the document right now."""
+    limit_storage_requests(engine)
     document, chunks = service.open_download(engine, token)
     filename = quote(document["original_filename"])
     return StreamingResponse(chunks, media_type=document["mime_type"], headers={
