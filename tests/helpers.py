@@ -63,3 +63,18 @@ def audit_events(engine, action=None):
         params["action"] = action
     with engine.connect() as db:
         return [dict(row) for row in db.execute(text(sql + " ORDER BY occurred_at"), params).mappings()]
+
+
+def patient_body(**overrides):
+    body = {"legal_first_name": "Margaret", "legal_last_name": "Okafor", "date_of_birth": "1948-03-14",
+            "phone": "+44 7700 900456", "email": "maggie@example.com", "address_line1": "12 Elm Road",
+            "city": "Leeds", "postcode": "LS1 4AB"}
+    body.update(overrides)
+    return body
+
+
+def make_patient(client, org, **overrides):
+    """Created by the org's Ops Admin. Returns the patient JSON."""
+    response = client.post("/api/v1/patients", headers=org["ops"]["headers"], json=patient_body(**overrides))
+    assert response.status_code == 201, response.text
+    return response.json()

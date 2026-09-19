@@ -36,3 +36,15 @@ tests/               pytest, runs against a throwaway database
 | Security headers | `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, strict CSP on API routes, HSTS in production. CORS is an explicit allow-list (`CORS_ORIGINS`). |
 
 The sections below are filled in as each module lands.
+
+## Patients and assignments
+
+- **Who sees which patient** is decided in one place, `app/modules/patients/access.py`. `patients:read_all` sees every patient of the organisation. `patients:read_assigned` sees only patients with an active assignment to the caller, directly or through one of their teams. Later modules (appointments, tasks, notes, documents) reuse the same rule.
+- **Hidden means 404.** A patient in another organisation, or one that is not assigned to you, gets the same `404 NOT_FOUND` as an id that does not exist, so a guessed UUID reveals nothing. The attempt is still audited as `access.denied`.
+- **Field classification.** MRN, date of birth and address are *sensitive*: they come back as `null` (with `sensitive_fields_hidden: true`) unless the caller has `patients:read_sensitive`, and they cannot be searched or sorted on without it. Responses are built from an allow-list of fields, never from the database row.
+- **Duplicates.** An MRN is unique within an organisation (`409 DUPLICATE_IDENTIFIER`, enforced by a unique index). The same first name, last name and date of birth gives `409 POSSIBLE_DUPLICATE`, which staff can override with `confirm_not_duplicate: true` after checking. The error never names the other record.
+- **Concurrent edits.** Patients carry a `version`. A PATCH must send the version it read, or it gets `409 VERSION_CONFLICT`.
+- **Archive, never delete.** Archiving keeps the record (retention), hides it from default lists, makes it read-only, and deactivates and signs out the patient's app account.
+- **Assignments** keep their history: unassigning sets `active = false` and `ends_on`. Partial unique indexes allow one active PRIMARY per patient and stop the same person or team being assigned twice.
+- **Patient app.** `/api/v1/app/profile` has no patient id in the URL. The record is found from the caller's own app account, so one patient cannot ask for another's. Patients may change only their preferred name, phone, language and contact preferences.
+- **Audit.** Create, update, archive, restore, reads of a full record, emergency-contact and assignment changes are audited with field *names* only, never values.
