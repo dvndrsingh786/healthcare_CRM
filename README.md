@@ -6,7 +6,7 @@ private documents, a notification outbox, and a searchable audit log.
 
 - **Stack:** Python 3.11+, FastAPI, PostgreSQL 16/17, SQLAlchemy Core (hand-written parameterised SQL), pytest
 - **API:** REST/JSON under `/api/v1`, 100 endpoints, OpenAPI at `/docs` (also committed as [docs/openapi.json](docs/openapi.json))
-- **Docs:** [Architecture](docs/ARCHITECTURE.md) · [Demo checklist](docs/DEMO.md) · [Runbook](docs/RUNBOOK.md) · [Known limitations & backlog](docs/BACKLOG.md) · [Handover](docs/HANDOVER.md)
+- **Docs:** [Manual testing guide](docs/MANUAL_TESTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Demo checklist](docs/DEMO.md) · [Runbook](docs/RUNBOOK.md) · [Known limitations & backlog](docs/BACKLOG.md) · [Handover](docs/HANDOVER.md)
 
 ## Prerequisites
 
@@ -64,6 +64,10 @@ Password for all of them: `DemoPass123!` (override with `SEED_PASSWORD`).
 `seed.py` also prints an API key for the `outbox-worker` service account (shown once).
 
 In Swagger (`/docs`): call `POST /api/v1/auth/login`, copy `access_token`, click **Authorize**.
+
+**Trying it by hand?** Follow the [manual testing guide](docs/MANUAL_TESTING.md): how to log in, what each
+role can do, and realistic scenarios (booking → reschedule → cancel, a new patient, restricted notes,
+documents, consent) with copy-paste request bodies and the expected results.
 
 ## Tests and checks
 
